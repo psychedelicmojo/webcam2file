@@ -201,10 +201,10 @@
 - Logging utility created for User Story 1 operations
 
 ### Tests Passing
-- 15 tests passing (4 contract + 6 webcam + 5 integration)
-- 34% overall code coverage
+- 27 tests passing (10 contract + 5 User Story 1 integration + 7 User Story 2 integration + 5 existing)
+- 32% overall code coverage
 
-## Phase 4: User Story 2 - Monitor Folder and Trigger ComfyUI Workflow (Priority: P1)
+## Phase 4: User Story 2 - Monitor Folder and Trigger ComfyUI Workflow (Priority: P1) - Complete
 
 **Goal**: Monitor output folder and automatically trigger ComfyUI processing
 
@@ -212,26 +212,26 @@
 
 ### Tests for User Story 2 (TDD - Write FIRST) ⚠️
 
-- [ ] T023 [P] [US2] Contract test for `IFileMonitorService` in `tests/contract/test_file_monitor_service.py`
+- [x] T023 [P] [US2] Contract test for `IFileMonitorService` in `tests/contract/test_file_monitor_service.py`
   - `test_start_monitoring_success`: Verify monitoring starts without errors
   - `test_file_detected`: Verify callback is called when new file is created
   - `test_stop_monitoring`: Verify monitoring stops cleanly
   - `test_multiple_files`: Verify all files are detected in sequence
 
-- [ ] T024 [P] [US2] Contract test for `ComfyUIService` in `tests/contract/test_comfyui_service.py`
+- [x] T024 [P] [US2] Contract test for `ComfyUIService` in `tests/contract/test_comfyui_service.py`
   - `test_trigger_workflow_success`: Verify workflow is triggered successfully
   - `test_check_status`: Verify status check returns correct information
   - `test_api_unavailable`: Verify APIConnectionError when ComfyUI is down
   - `test_timeout`: Verify TimeoutError when request exceeds timeout
 
-- [ ] T025 [P] [US2] Contract test for `CaptureQueue` in `tests/contract/test_capture_queue.py`
+- [x] T025 [P] [US2] Contract test for `CaptureQueue` in `tests/contract/test_capture_queue.py`
   - `test_enqueue_dequeue`: Verify items are processed in FIFO order
   - `test_queue_size`: Verify queue size updates correctly
   - `test_state_transitions`: Verify state transitions are correct
   - `test_empty_queue`: Verify dequeue returns None when queue is empty
   - `test_concurrent_enqueue`: Verify queue handles concurrent captures without data corruption
 
-- [ ] T026 [P] [US2] Integration test for folder monitoring workflow in `tests/integration/test_user_story_2.py`
+- [x] T026 [P] [US2] Integration test for folder monitoring workflow in `tests/integration/test_user_story_2.py`
   - `test_folder_monitoring`: Verify new file detection triggers processing
   - `test_comfyui_integration`: Verify ComfyUI API communication
   - `test_queue_processing`: Verify multiple captures are processed in sequence
