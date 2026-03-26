@@ -312,27 +312,39 @@
 
 ### Implementation for User Story 3
 
-- [ ] T035 [P] [US3] Create `SettingsService` in `src/services/settings_service.py`
-  - Methods: `load_settings()`, `save_settings()`, `validate_settings()`, `test_connection()`
+- [x] T035 [P] [US3] Create `SettingsService` in `src/services/settings_service.py`
+  - Methods: `load_settings()`, `save_settings()`, `validate_settings()`, `test_connection()`, `ensure_output_folder_exists()`
   - Uses `ApplicationSettings` model for data
+  - Full logging integration using `LoggerManager`
 
-- [ ] T036 [P] [US3] Create settings dialog UI in `src/ui/settings_dialog.py`
+- [x] T036 [P] [US3] Create settings dialog UI in `src/ui/settings_dialog.py`
   - Output folder selection (file picker)
   - ComfyUI endpoint input
   - Workflow JSON file selection
   - Connection test button
   - Save/Cancel buttons
 
-- [ ] T037 [US3] Integrate settings dialog with main window in `src/ui/main_window.py`
+- [x] T037 [US3] Integrate settings dialog with main window in `src/ui/main_window.py`
   - Settings menu item opens dialog
   - Apply settings on save
   - Validate before applying
 
-- [ ] T038 [US3] Add logging for User Story 3 operations in `src/lib/logging_utils.py`
+- [x] T038 [US3] Add logging for User Story 3 operations in `src/lib/logging_utils.py`
   - Log settings changes
   - Log connection test results
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently
+
+### User Story 3 Implementation Complete
+
+- T035-T038: All implementation tasks complete
+- T033-T034: All verification tasks complete
+
+**Completed Tasks Summary (User Story 3)**:
+- [`SettingsService`](src/services/settings_service.py:16) with full logging integration
+- [`SettingsDialog`](src/ui/settings_dialog.py:18) with folder/file pickers and connection test
+- Settings dialog integrated with main window
+- All 20 unit tests passing
 
 ---
 
