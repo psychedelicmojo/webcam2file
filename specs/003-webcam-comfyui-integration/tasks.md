@@ -374,20 +374,20 @@
 
 ### Implementation for User Story 4
 
-- [ ] T042 [P] [US4] Update `CaptureService` with error handling in `src/services/capture_service.py`
+- [x] T042 [P] [US4] Update `CaptureService` with error handling in `src/services/capture_service.py`
   - Catch `WebcamNotFoundError`, `WebcamAccessError`, `CaptureError`
   - Display user-friendly messages via `VisualFeedback`
 
-- [ ] T043 [P] [US4] Update `ProcessingOrchestrator` with error handling in `src/services/processing_orchestrator.py`
+- [x] T043 [P] [US4] Update `ProcessingOrchestrator` with error handling in `src/services/processing_orchestrator.py`
   - Catch `APIConnectionError`, `APIError`, `TimeoutError`
   - Queue error state management
   - Retry logic for transient failures
 
-- [ ] T044 [US4] Update UI error display in `src/ui/main_window.py`
+- [x] T044 [US4] Update UI error display in `src/ui/main_window.py`
   - Error dialog with message and recovery action
   - Non-blocking error notifications
 
-- [ ] T045 [US4] Add logging for User Story 4 operations in `src/lib/logging_utils.py`
+- [x] T045 [US4] Add logging for User Story 4 operations in `src/lib/logging_utils.py`
   - Log all errors with full context
   - Log recovery actions
 

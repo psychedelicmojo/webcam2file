@@ -1,12 +1,16 @@
 """Service for capturing images from webcam and saving to file system."""
 
+import logging
 from pathlib import Path
 
+from src.lib.error_manager import ErrorManager
 from src.models.image_capture import ImageCapture
 from src.services.visual_feedback import IVisualFeedback
 from src.services.webcam_service import (
     CaptureError,
     IWebcamService,
+    WebcamNotFoundError,
+    WebcamAccessError,
     WebcamNotStartedError,
 )
 
@@ -30,14 +34,17 @@ class CaptureService:
         self._webcam_service = webcam_service
         self._visual_feedback = visual_feedback
         self._output_folder = output_folder
+        self._error_manager = ErrorManager()
 
     def capture(self) -> ImageCapture:
         """Capture a frame from the webcam and save it to the output folder.
         
         Returns:
             ImageCapture: The captured image information
-            
+        
         Raises:
+            WebcamNotFoundError: If no webcam is available
+            WebcamAccessError: If webcam access is denied
             WebcamNotStartedError: If webcam is not running
             CaptureError: If frame capture fails
             IOError: If file save fails
@@ -78,9 +85,18 @@ class CaptureService:
 
             return image_capture
 
+        except WebcamNotFoundError as e:
+            self._visual_feedback.hide_feedback()
+            error_info = self._error_manager.handle_error(e, "No webcam detected. Please connect a webcam and try again.")
+            raise CaptureError(error_info['user_message']) from e
+        except WebcamAccessError as e:
+            self._visual_feedback.hide_feedback()
+            error_info = self._error_manager.handle_error(e, "Cannot access webcam. Close other applications using the webcam and try again.")
+            raise CaptureError(error_info['user_message']) from e
         except WebcamNotStartedError:
             self._visual_feedback.hide_feedback()
             raise
         except Exception as e:
             self._visual_feedback.hide_feedback()
-            raise CaptureError(f"Failed to capture frame: {str(e)}") from e
+            error_info = self._error_manager.handle_error(e, "Failed to capture frame.")
+            raise CaptureError(error_info['user_message']) from e

@@ -1,5 +1,6 @@
 """Main window UI for the Webcam-to-ComfyUI Desktop Application."""
 
+import logging
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -8,6 +9,7 @@ from typing import Optional
 import cv2
 from PIL import Image, ImageTk
 
+from src.lib.error_manager import ErrorManager
 from src.services.capture_service import CaptureService
 from src.services.comfyui_service import IComfyUIService
 from src.services.file_monitor_service import IFileMonitorService
@@ -16,6 +18,8 @@ from src.services.settings_service import SettingsService
 from src.services.visual_feedback import IVisualFeedback
 from src.services.webcam_service import IWebcamService
 from src.ui.settings_dialog import SettingsDialog
+
+logger = logging.getLogger(__name__)
 
 
 class MainWindow:
@@ -50,6 +54,7 @@ class MainWindow:
         self._file_monitor_service = file_monitor_service
         self._comfyui_service = comfyui_service
         self._orchestrator = orchestrator
+        self._error_manager = ErrorManager()
 
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
@@ -144,12 +149,84 @@ class MainWindow:
             )
 
         except Exception as e:
+            error_info = self._error_manager.handle_error(e)
             self._status_label.config(
-                text=f"Status: Error - {str(e)}", foreground="red"
+                text=f"Status: Error - {error_info['user_message']}", foreground="red"
             )
-            messagebox.showerror("Capture Error", str(e))
+            self._show_error_dialog(
+                title="Capture Error",
+                message=error_info['user_message'],
+                recovery_action=error_info['recovery_action']
+            )
+            logger.error(f"Capture error: {error_info['original_message']}")
         finally:
             self._capture_button.config(state=tk.NORMAL)
+
+    def _show_error_dialog(
+        self,
+        title: str,
+        message: str,
+        recovery_action: str
+    ) -> None:
+        """Show an error dialog with user-friendly message and recovery action.
+        
+        Args:
+            title: Dialog title
+            message: Error message to display
+            recovery_action: Suggested recovery action
+        """
+        # Create a custom error dialog
+        dialog = tk.Toplevel(self._root)
+        dialog.title(title)
+        dialog.geometry("400x200")
+        dialog.transient(self._root)
+        dialog.grab_set()
+
+        # Icon frame
+        icon_frame = ttk.Frame(dialog, padding="10")
+        icon_frame.pack(fill="x")
+
+        icon_label = ttk.Label(icon_frame, text="⚠️", font=("Segoe UI", 48))
+        icon_label.pack()
+
+        # Message frame
+        message_frame = ttk.Frame(dialog, padding="10")
+        message_frame.pack(fill="both", expand=True)
+
+        message_label = ttk.Label(
+            message_frame,
+            text=message,
+            wraplength=350,
+            font=("Segoe UI", 10)
+        )
+        message_label.pack(pady=(0, 10))
+
+        # Recovery action frame
+        recovery_frame = ttk.Frame(message_frame, padding="5")
+        recovery_frame.pack(fill="x")
+
+        recovery_label = ttk.Label(
+            recovery_frame,
+            text=f"Recovery: {recovery_action}",
+            wraplength=350,
+            foreground="orange",
+            font=("Segoe UI", 9, "italic")
+        )
+        recovery_label.pack()
+
+        # Button frame
+        button_frame = ttk.Frame(dialog, padding="10")
+        button_frame.pack(fill="x")
+
+        ok_button = ttk.Button(
+            button_frame,
+            text="OK",
+            command=dialog.destroy
+        )
+        ok_button.pack(side="right", padx=5)
+
+        # Center dialog on parent
+        dialog.geometry(f"+{self._root.winfo_x() + 100}+{self._root.winfo_y() + 100}")
 
     def _on_settings(self) -> None:
         """Handle settings button press."""
@@ -172,7 +249,13 @@ class MainWindow:
                 self._apply_settings(new_settings)
 
         except Exception as e:
-            messagebox.showerror("Settings Error", f"Failed to open settings: {str(e)}")
+            error_info = self._error_manager.handle_error(e)
+            self._show_error_dialog(
+                title="Settings Error",
+                message=f"Failed to open settings: {error_info['user_message']}",
+                recovery_action=error_info['recovery_action']
+            )
+            logger.error(f"Settings error: {error_info['original_message']}")
 
     def _apply_settings(self, settings) -> None:
         """Apply new settings to the application.
@@ -229,8 +312,9 @@ class MainWindow:
                 self._video_label.config(image=photo)
                 self._video_label.image = photo  # Keep reference
 
-        except Exception:
+        except Exception as e:
             # Log error but continue trying
+            logger.debug(f"Video feed update error: {e}")
             pass
 
         # Schedule next frame update
@@ -275,8 +359,10 @@ class MainWindow:
             self._root.mainloop()
 
         except Exception as e:
-            error_msg = f"Failed to start application: {str(e)}"
+            error_info = self._error_manager.handle_error(e)
+            error_msg = f"Failed to start application: {error_info['user_message']}"
             messagebox.showerror("Startup Error", error_msg)
+            logger.error(f"Startup error: {error_info['original_message']}")
             raise
 
     def stop(self) -> None:
@@ -292,7 +378,8 @@ class MainWindow:
             if self._webcam_service.is_running():
                 self._webcam_service.stop()
 
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Error during shutdown: {e}")
             pass
 
     def set_orchestrator(self, orchestrator: ProcessingOrchestrator) -> None:
