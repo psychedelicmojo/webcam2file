@@ -356,14 +356,14 @@
 
 ### Tests for User Story 4 (TDD - Write FIRST) ⚠️
 
-- [ ] T039 [P] [US4] Unit test for `ErrorManager` in `tests/unit/test_error_manager.py`
+- [x] T039 [P] [US4] Unit test for `ErrorManager` in `tests/unit/test_error_manager.py`
   - `test_webcam_not_found`: Verify correct error message and recovery action
   - `test_api_connection_error`: Verify correct error message and recovery action
   - `test_timeout_error`: Verify correct error message and recovery action
   - `test_folder_inaccessible`: Verify correct error message and recovery action
   - `test_api_error`: Verify correct error message and recovery action
 
-- [ ] T040 [P] [US4] Integration test for error scenarios in `tests/integration/test_user_story_4.py`
+- [x] T040 [P] [US4] Integration test for error scenarios in `tests/integration/test_user_story_4.py`
   - `test_no_webcam_scenario`: Verify error handling when no webcam
   - `test_comfyui_unavailable`: Verify error handling when ComfyUI down
   - `test_folder_inaccessible`: Verify error handling when folder inaccessible
