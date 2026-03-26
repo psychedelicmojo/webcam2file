@@ -204,6 +204,10 @@
 - 27 tests passing (10 contract + 5 User Story 1 integration + 7 User Story 2 integration + 5 existing)
 - 32% overall code coverage
 
+### User Story 2 Implementation Complete
+- T027-T030: All implementation tasks complete
+- T032A-T032D: All verification tasks complete
+
 ## Phase 4: User Story 2 - Monitor Folder and Trigger ComfyUI Workflow (Priority: P1) - Complete
 
 **Goal**: Monitor output folder and automatically trigger ComfyUI processing
@@ -239,33 +243,33 @@
 
 ### Implementation for User Story 2
 
-- [ ] T027 [P] [US2] Create `FileMonitorServiceImpl` in `src/services/file_monitor_impl.py`
+- [x] T027 [P] [US2] Create `FileMonitorServiceImpl` in `src/services/file_monitor_impl.py`
   - Implements `IFileMonitorService` using watchdog
   - Filters for JPEG files only
   - Uses `FileUtils.wait_for_file_ready()` to handle race conditions
 
-- [ ] T028 [P] [US2] Create `ComfyUIService` in `src/services/comfyui_service_impl.py`
+- [x] T028 [P] [US2] Create `ComfyUIService` in `src/services/comfyui_service_impl.py`
   - Implements `IComfyUIService` using requests library
   - Methods: `trigger_workflow()`, `check_status()`, `is_available()`
   - Default endpoint: `http://127.0.0.1:8188`
 
-- [ ] T029 [P] [US2] Create `CaptureQueue` in `src/services/capture_queue_impl.py`
+- [x] T029 [P] [US2] Create `CaptureQueue` in `src/services/capture_queue_impl.py`
   - Implements `ICaptureQueue` with thread-safe queue
   - FIFO processing order
   - State management: `idle`, `processing`, `completed`, `error`
   - Concurrent capture handling: verify no data corruption under load
 
-- [ ] T030 [US2] Implement `ProcessingOrchestrator` in `src/services/processing_orchestrator.py`
+- [x] T030 [US2] Implement `ProcessingOrchestrator` in `src/services/processing_orchestrator.py`
   - Dependencies: `IFileMonitorService`, `ICaptureQueue`, `IComfyUIService`
   - Methods: `start()`, `stop()`, `on_file_created(filepath)`
   - Coordinates file monitoring, queue management, and ComfyUI API calls
   - Queue ordering: verify sequential processing under concurrent capture load
 
-- [ ] T031 [US2] Integrate `ProcessingOrchestrator` with UI in `src/ui/main_window.py`
+- [x] T031 [US2] Integrate `ProcessingOrchestrator` with UI in `src/ui/main_window.py`
   - Display processing status
   - Show visual feedback for processing start/completion/error
 
-- [ ] T032 [US2] Add logging for User Story 2 operations in `src/lib/logging_utils.py`
+- [x] T032 [US2] Add logging for User Story 2 operations in `src/lib/logging_utils.py`
   - Log file detection events
   - Log ComfyUI API calls
   - Log queue operations
@@ -280,10 +284,10 @@
 
 **⚠️ CRITICAL**: No implementation tasks can begin until all tests in this checkpoint pass
 
-- [ ] T032A [P] [US2] Verify all contract tests for `IFileMonitorService` pass
-- [ ] T032B [P] [US2] Verify all contract tests for `IComfyUIService` pass
-- [ ] T032C [P] [US2] Verify all contract tests for `CaptureQueue` pass
-- [ ] T032D [P] [US2] Verify all integration tests for User Story 2 pass
+- [x] T032A [P] [US2] Verify all contract tests for `IFileMonitorService` pass
+- [x] T032B [P] [US2] Verify all contract tests for `IComfyUIService` pass
+- [x] T032C [P] [US2] Verify all contract tests for `CaptureQueue` pass
+- [x] T032D [P] [US2] Verify all integration tests for User Story 2 pass
 
 ---
 
@@ -295,13 +299,13 @@
 
 ### Tests for User Story 3 (TDD - Write FIRST) ⚠️
 
-- [ ] T033 [P] [US3] Unit test for `ApplicationSettings` in `tests/unit/test_application_settings.py`
+- [x] T033 [P] [US3] Unit test for `ApplicationSettings` in `tests/unit/test_application_settings.py`
   - `test_valid_settings`: Verify valid settings pass validation
   - `test_invalid_folder`: Verify FolderNotFoundError for non-existent folder
   - `test_invalid_url`: Verify ValueError for invalid URL
   - `test_persistence`: Verify settings save/load correctly
 
-- [ ] T034 [P] [US3] Integration test for settings workflow in `tests/integration/test_user_story_3.py`
+- [x] T034 [P] [US3] Integration test for settings workflow in `tests/integration/test_user_story_3.py`
   - `test_settings_persistence`: Verify settings persist across restarts
   - `test_connection_test`: Verify ComfyUI connection test works
   - `test_workflow_validation`: Verify workflow JSON validation
