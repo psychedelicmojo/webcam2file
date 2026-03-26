@@ -1,8 +1,6 @@
 """Contract tests for ICaptureQueue interface."""
 
-import pytest
 import threading
-import time
 from typing import Optional
 
 from src.services.capture_queue import (

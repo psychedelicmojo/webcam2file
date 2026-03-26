@@ -11,13 +11,16 @@ from PIL import Image, ImageTk
 from src.services.capture_service import CaptureService
 from src.services.comfyui_service import IComfyUIService
 from src.services.file_monitor_service import IFileMonitorService
+from src.services.processing_orchestrator import ProcessingOrchestrator
+from src.services.settings_service import SettingsService
 from src.services.visual_feedback import IVisualFeedback
 from src.services.webcam_service import IWebcamService
+from src.ui.settings_dialog import SettingsDialog
 
 
 class MainWindow:
     """Main application window for webcam capture and processing.
-    
+
     This window displays a live video feed from the webcam and handles
     user interactions including image capture via space bar.
     """
@@ -28,22 +31,25 @@ class MainWindow:
         capture_service: CaptureService,
         visual_feedback: IVisualFeedback,
         file_monitor_service: Optional[IFileMonitorService] = None,
-        comfyui_service: Optional[IComfyUIService] = None
+        comfyui_service: Optional[IComfyUIService] = None,
+        orchestrator: Optional[ProcessingOrchestrator] = None
     ):
         """Initialize the main window.
-        
+
         Args:
             webcam_service: Service for webcam video capture
             capture_service: Service for capturing and saving images
             visual_feedback: Service for visual feedback display
             file_monitor_service: Optional service for folder monitoring
             comfyui_service: Optional service for ComfyUI API
+            orchestrator: Optional processing orchestrator for User Story 2
         """
         self._webcam_service = webcam_service
         self._capture_service = capture_service
         self._visual_feedback = visual_feedback
         self._file_monitor_service = file_monitor_service
         self._comfyui_service = comfyui_service
+        self._orchestrator = orchestrator
 
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
@@ -147,8 +153,50 @@ class MainWindow:
 
     def _on_settings(self) -> None:
         """Handle settings button press."""
-        # TODO: Implement settings dialog
-        messagebox.showinfo("Settings", "Settings dialog not yet implemented")
+        try:
+            # Create settings service
+            settings_service = SettingsService()
+
+            # Create and show settings dialog
+            dialog = SettingsDialog(
+                self._root,
+                settings_service,
+                self._comfyui_service,
+            )
+
+            # Show dialog and get result
+            new_settings, settings_changed = dialog.show()
+
+            if settings_changed and new_settings:
+                # Apply new settings
+                self._apply_settings(new_settings)
+
+        except Exception as e:
+            messagebox.showerror("Settings Error", f"Failed to open settings: {str(e)}")
+
+    def _apply_settings(self, settings) -> None:
+        """Apply new settings to the application.
+
+        Args:
+            settings: New ApplicationSettings instance
+        """
+        # Update capture service output folder
+        self._capture_service._output_folder = settings.output_folder
+
+        # Update ComfyUI service endpoint and timeout if available
+        if self._comfyui_service:
+            self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip('/')
+            self._comfyui_service._timeout = settings.api_timeout
+
+        # Update orchestrator if available
+        if self._orchestrator:
+            self._orchestrator.update_settings(settings)
+
+        # Update status label
+        self._status_label.config(
+            text=f"Status: Settings applied - {settings.output_folder}",
+            foreground="green"
+        )
 
     def _on_quit(self) -> None:
         """Handle quit button press."""
@@ -191,7 +239,7 @@ class MainWindow:
 
     def _show_feedback(self, feedback_type: str) -> None:
         """Show visual feedback for an operation.
-        
+
         Args:
             feedback_type: Type of feedback ('capture', 'processing', etc.)
         """
@@ -218,11 +266,17 @@ class MainWindow:
             self._running = True
             self._update_video_feed()
 
+            # Start orchestrator if available (User Story 2)
+            if self._orchestrator is not None:
+                self._orchestrator.start()
+                self._update_status_label()
+
             # Start main loop
             self._root.mainloop()
 
         except Exception as e:
-            messagebox.showerror("Startup Error", f"Failed to start application: {str(e)}")
+            error_msg = f"Failed to start application: {str(e)}"
+            messagebox.showerror("Startup Error", error_msg)
             raise
 
     def stop(self) -> None:
@@ -230,9 +284,49 @@ class MainWindow:
         self._running = False
 
         try:
+            # Stop orchestrator if running
+            if self._orchestrator is not None and self._orchestrator.is_running():
+                self._orchestrator.stop()
+
             # Stop webcam
             if self._webcam_service.is_running():
                 self._webcam_service.stop()
 
         except Exception:
             pass
+
+    def set_orchestrator(self, orchestrator: ProcessingOrchestrator) -> None:
+        """Set the processing orchestrator for User Story 2 integration.
+
+        Args:
+            orchestrator: The processing orchestrator instance
+        """
+        self._orchestrator = orchestrator
+
+    def _update_status_label(self) -> None:
+        """Update the status label with processing information."""
+        if self._orchestrator is not None:
+            status = self._orchestrator.get_status()
+            state = status.state
+            queue_size = status.queue_size
+
+            if state == 'processing':
+                self._status_label.config(
+                    text=f"Status: Processing (Queue: {queue_size})",
+                    foreground="orange"
+                )
+            elif state == 'completed':
+                self._status_label.config(
+                    text="Status: Processing complete",
+                    foreground="green"
+                )
+            elif state == 'error':
+                self._status_label.config(
+                    text=f"Status: Error - {status.error_message}",
+                    foreground="red"
+                )
+            else:
+                self._status_label.config(
+                    text=f"Status: Ready (Queue: {queue_size})",
+                    foreground="green"
+                )
