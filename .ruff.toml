@@ -1,0 +1,32 @@
+# Ruff configuration for Python 3.11
+target-version = "py311"
+
+line-length = 88
+select = ["E", "W", "F", "B", "C4", "I"]
+ignore = []
+
+# Allow auto-fix for selected rules
+fixable = ["E", "W", "F", "I"]
+unfixable = ["B", "C4"]
+
+# Exclude patterns
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    ".venv",
+    "dist",
+    "build",
+]
+
+# Per-file ignores
+# [per-file-ignores]
+
+# Import sorting
+isort = { order-by-type = true, relative-imports-order = "closest-to-furthest" }
+
+# Format configuration
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
