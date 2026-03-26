@@ -133,15 +133,15 @@ The ComfyUI workflow processes the captured image using the specified art style 
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can capture and save an image within 2 seconds of pressing the space bar.
+- **SC-001**: Users can capture and save an image within 2 seconds of pressing the space bar. Timing measured from space bar press to file system confirmation of JPEG write completion.
 
-- **SC-002**: The application detects new images and triggers ComfyUI processing within 5 seconds of the file being saved.
+- **SC-002**: The application detects new images and triggers ComfyUI processing within 5 seconds of the file being saved. Timing measured from file system write confirmation to ComfyUI API request initiation.
 
-- **SC-003**: Visual feedback appears on screen within 1 second of each significant event (capture, processing start, processing completion).
+- **SC-003**: Visual feedback appears on screen within 1 second of each significant event (capture, processing start, processing completion). Timing measured from event trigger to visual effect visibility.
 
-- **SC-004**: The application successfully handles 95% of common error scenarios (no webcam, API unavailable, folder inaccessible) without crashing.
+- **SC-004**: The application successfully handles all 7 defined error scenarios (no webcam, API unavailable, folder inaccessible, API timeout, large file, multiple instances, workflow error) without crashing.
 
-- **SC-005**: Users can complete the full workflow (capture → process → receive result) in under 3 minutes for typical image sizes.
+- **SC-005**: Users can complete the full workflow (capture → process → receive result) in under 3 minutes for typical image sizes (up to 5MB JPEG).
 
 - **SC-006**: 90% of users successfully complete their first capture on the first attempt without external assistance.
 
@@ -151,12 +151,12 @@ The ComfyUI workflow processes the captured image using the specified art style 
 
 - The ComfyUI service is running locally on the same machine and is accessible via standard API endpoints.
 
-- The output folder for captured images has sufficient storage space and appropriate write permissions.
+- The output folder for captured images has sufficient storage space (minimum 100MB free) and appropriate write permissions.
 
 - The ComfyUI workflow JSON file is pre-configured and accessible to the application.
 
-- The application runs on a desktop operating system (Windows, macOS, or Linux) with sufficient processing power for real-time video display and image processing.
+- The application runs on a desktop operating system (Windows 11, macOS, or Linux) with minimum 2GHz CPU and 4GB RAM for real-time video display and image processing.
 
-- Network connectivity to the local ComfyUI service is stable and has low latency.
+- Network connectivity to the local ComfyUI service is stable and has low latency (maximum 100ms round-trip time).
 
-- Image files will be of reasonable size (typical webcam capture dimensions) that don't exceed API payload limits.
+- Image files will be of reasonable size (maximum 5MB, typical webcam resolution 1920x1080 or lower) that don't exceed API payload limits.

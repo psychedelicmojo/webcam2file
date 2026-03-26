@@ -13,7 +13,7 @@ Build a desktop application that displays a live video feed from a connected hig
 **Primary Dependencies**: OpenCV (video capture), Pillow (image processing), requests (HTTP client for ComfyUI API), watchdog (file system monitoring)  
 **Storage**: Local file system (JPEG images, ComfyUI workflow JSON)  
 **Testing**: pytest (unit tests), pytest-watch (integration tests)  
-**Target Platform**: Windows 11 (desktop application)
+**Target Platform**: Windows 11 (primary), macOS and Linux (future expansion). Current implementation targets Windows 11 desktop application.
 **Project Type**: desktop-app  
 **Performance Goals**: 60 fps video display, <2s capture time, <5s detection + trigger time  
 **Constraints**: <500MB memory usage, offline-capable (ComfyUI runs locally)  
