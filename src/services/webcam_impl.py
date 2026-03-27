@@ -137,3 +137,29 @@ class WebcamServiceImpl(IWebcamService):
             tuple: (width, height) of the configured resolution
         """
         return (self._width, self._height)
+
+    @staticmethod
+    def list_available_webcams(max_devices: int = 10) -> list:
+        """List available webcam devices.
+
+        Args:
+            max_devices: Maximum number of devices to check (default: 10)
+
+        Returns:
+            list: List of tuples (index, name) for available webcams
+        """
+        available = []
+        for i in range(max_devices):
+            try:
+                cap = cv2.VideoCapture(i)
+                if cap.isOpened():
+                    # Try to get camera name (may not work on all platforms)
+                    name = f"Webcam {i}"
+                    # Try to read a frame to verify it works
+                    ret, _ = cap.read()
+                    if ret:
+                        available.append((i, name))
+                    cap.release()
+            except cv2.error:
+                pass
+        return available

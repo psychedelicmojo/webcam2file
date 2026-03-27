@@ -82,6 +82,9 @@ class MainWindow:
         # Video label for displaying frames
         self._video_label = ttk.Label(self._video_frame)
         self._video_label.grid(row=0, column=0, sticky="nsew")
+        
+        # Placeholder for the current photo image (created later when window is visible)
+        self._current_photo = None
 
         # Status frame
         self._status_frame = ttk.Frame(self._main_frame, padding="5")
@@ -122,6 +125,7 @@ class MainWindow:
         # Video capture thread
         self._video_thread: Optional[threading.Thread] = None
         self._running = False
+        self._video_feed_after_id: Optional[str] = None
 
         # Bind space bar for capture
         self._root.bind("<space>", self._on_space_bar)
@@ -280,15 +284,33 @@ class MainWindow:
             return
 
         try:
+            # Check if window still exists before updating
+            if not self._root.winfo_exists():
+                return
+
             if self._webcam_service.is_running():
                 # Capture frame for display (not saved)
                 frame_data = self._webcam_service.capture_frame()
 
+                # Debug: Check if frame data is valid
+                if not frame_data or len(frame_data) == 0:
+                    logger.error("Empty frame data received")
+                    self._schedule_next_frame()
+                    return
+
                 # Convert to PIL Image for display
                 import numpy as np
+                from PIL import Image
 
-                frame = np.frombuffer(frame_data, dtype=np.uint8)
-                frame = frame.reshape((1080, 1920, 3))
+                # Decode JPEG to get actual frame dimensions
+                # cv2.imdecode expects a numpy array, not bytes
+                frame_array = np.frombuffer(frame_data, dtype=np.uint8)
+                frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+                
+                if frame is None:
+                    logger.error("Failed to decode frame")
+                    self._schedule_next_frame()
+                    return
 
                 # Convert BGR to RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -297,18 +319,41 @@ class MainWindow:
                 pil_image = Image.fromarray(frame)
                 photo = ImageTk.PhotoImage(image=pil_image)
 
-                # Update label
-                self._video_label.config(image=photo)
-                self._video_label.image = photo  # Keep reference
+                # Update label - check if widget still exists
+                try:
+                    self._video_label.config(image=photo)
+                    self._video_label.image = photo  # Keep reference
+                except tk.TclError:
+                    # Widget may have been destroyed
+                    pass
 
         except Exception as e:
             # Log error but continue trying
-            logger.debug(f"Video feed update error: {e}")
-            pass
+            logger.error(f"Video feed update error: {e}")
+            import traceback
+            logger.error(f"Video feed traceback: {traceback.format_exc()}")
 
         # Schedule next frame update
         if self._running:
-            self._root.after(33, self._update_video_feed)  # ~30 FPS
+            self._schedule_next_frame()
+
+    def _schedule_next_frame(self) -> None:
+        """Schedule the next video frame update, canceling any pending update."""
+        if not self._running:
+            return
+        # Cancel any pending update to avoid queue buildup
+        if self._video_feed_after_id is not None:
+            try:
+                self._root.after_cancel(self._video_feed_after_id)
+            except tk.TclError:
+                # Window may be closing
+                return
+        # Schedule new update
+        try:
+            self._video_feed_after_id = self._root.after(33, self._update_video_feed)
+        except tk.TclError:
+            # Window may be closing
+            pass
 
     def _show_feedback(self, feedback_type: str) -> None:
         """Show visual feedback for an operation.
@@ -335,15 +380,22 @@ class MainWindow:
             # Start webcam
             self._webcam_service.start()
 
-            # Start video feed update loop
-            self._running = True
-            self._update_video_feed()
-
             # Start orchestrator if available (User Story 2)
             if self._orchestrator is not None:
                 self._orchestrator.start()
                 self._update_status_label()
 
+            # Show the window and process events
+            self._root.deiconify()
+            self._root.update()
+
+            # Start main loop first
+            self._running = True
+        
+            # Schedule video feed update after window is visible
+            # Use after_idle to ensure all pending events are processed first
+            self._root.after_idle(self._update_video_feed)
+            
             # Start main loop
             self._root.mainloop()
 
@@ -354,11 +406,30 @@ class MainWindow:
             logger.error(f"Startup error: {error_info['original_message']}")
             raise
 
+    def _video_feed_loop(self) -> None:
+        """Run the video feed update loop in a separate thread."""
+        while self._running:
+            try:
+                self._update_video_feed()
+            except Exception as e:
+                logger.debug(f"Video feed loop error: {e}")
+            # Sleep to avoid busy-waiting
+            import time
+            time.sleep(0.033)  # ~30 FPS
+
     def stop(self) -> None:
         """Stop the main window and release resources."""
         self._running = False
 
         try:
+            # Cancel any pending video feed updates
+            if self._video_feed_after_id is not None:
+                try:
+                    self._root.after_cancel(self._video_feed_after_id)
+                except tk.TclError:
+                    pass
+                self._video_feed_after_id = None
+
             # Stop orchestrator if running
             if self._orchestrator is not None and self._orchestrator.is_running():
                 self._orchestrator.stop()

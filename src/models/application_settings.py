@@ -13,8 +13,8 @@ class ApplicationSettings:
 
     Attributes:
         output_folder: Directory where captured images are saved
-        comfyui_endpoint: ComfyUI API endpoint URL
-        workflow_json_path: Path to the ComfyUI workflow JSON file
+        comfyui_endpoint: ComfyUI API endpoint URL (optional, set to None to disable ComfyUI)
+        workflow_json_path: Path to the ComfyUI workflow JSON file (optional)
         api_timeout: Timeout in seconds for API requests (default: 30)
     """
 
@@ -22,10 +22,19 @@ class ApplicationSettings:
     comfyui_endpoint: str
     workflow_json_path: str
     api_timeout: int = 30
+    enable_comfyui: bool = True
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
         self.validate()
+
+    def is_comfyui_enabled(self) -> bool:
+        """Check if ComfyUI integration is enabled.
+
+        Returns:
+            True if ComfyUI is enabled and configured, False otherwise.
+        """
+        return self.enable_comfyui and bool(self.workflow_json_path)
 
     def validate(self) -> bool:
         """Validate all settings.
@@ -37,8 +46,10 @@ class ApplicationSettings:
             ValueError: If any setting is invalid
         """
         self._validate_output_folder()
-        self._validate_comfyui_endpoint()
-        self._validate_workflow_json_path()
+        # Only validate ComfyUI settings if ComfyUI is enabled
+        if self.enable_comfyui:
+            self._validate_comfyui_endpoint()
+            self._validate_workflow_json_path()
         self._validate_api_timeout()
         return True
 
