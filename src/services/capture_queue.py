@@ -7,6 +7,7 @@ from typing import Optional
 
 class ProcessingState(Enum):
     """Enum for processing states."""
+
     IDLE = "idle"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -19,7 +20,7 @@ class ICaptureQueue(ABC):
     @abstractmethod
     def enqueue(self, image_path: str) -> None:
         """Add an image to the processing queue.
-        
+
         Args:
             image_path: Path to the image to process.
         """
@@ -28,7 +29,7 @@ class ICaptureQueue(ABC):
     @abstractmethod
     def dequeue(self) -> Optional[str]:
         """Remove and return the next image from the queue.
-        
+
         Returns:
             Optional[str]: Path to the next image, or None if queue is empty.
         """
@@ -37,7 +38,7 @@ class ICaptureQueue(ABC):
     @abstractmethod
     def get_queue_size(self) -> int:
         """Get the current queue size.
-        
+
         Returns:
             int: Number of images waiting in queue.
         """
@@ -46,7 +47,7 @@ class ICaptureQueue(ABC):
     @abstractmethod
     def get_processing_state(self) -> ProcessingState:
         """Get the current processing state.
-        
+
         Returns:
             ProcessingState: Current state of processing.
         """
@@ -54,12 +55,10 @@ class ICaptureQueue(ABC):
 
     @abstractmethod
     def set_processing_state(
-        self,
-        state: ProcessingState,
-        error_message: Optional[str] = None
+        self, state: ProcessingState, error_message: Optional[str] = None
     ) -> None:
         """Set the current processing state.
-        
+
         Args:
             state: New processing state.
             error_message: Error message if state is ERROR.
@@ -69,7 +68,7 @@ class ICaptureQueue(ABC):
     @abstractmethod
     def is_processing(self) -> bool:
         """Check if processing is currently active.
-        
+
         Returns:
             bool: True if processing, False otherwise.
         """

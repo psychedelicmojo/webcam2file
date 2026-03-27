@@ -36,7 +36,7 @@ class MainWindow:
         visual_feedback: IVisualFeedback,
         file_monitor_service: Optional[IFileMonitorService] = None,
         comfyui_service: Optional[IComfyUIService] = None,
-        orchestrator: Optional[ProcessingOrchestrator] = None
+        orchestrator: Optional[ProcessingOrchestrator] = None,
     ):
         """Initialize the main window.
 
@@ -116,9 +116,7 @@ class MainWindow:
         self._quit_button.grid(row=0, column=2, padx=5)
 
         # Feedback indicator
-        self._feedback_label = ttk.Label(
-            self._status_frame, text="", foreground="blue"
-        )
+        self._feedback_label = ttk.Label(self._status_frame, text="", foreground="blue")
         self._feedback_label.grid(row=0, column=1, padx=10)
 
         # Video capture thread
@@ -126,7 +124,7 @@ class MainWindow:
         self._running = False
 
         # Bind space bar for capture
-        self._root.bind('<space>', self._on_space_bar)
+        self._root.bind("<space>", self._on_space_bar)
 
         # Handle window close
         self._root.protocol("WM_DELETE_WINDOW", self._on_quit)
@@ -155,21 +153,18 @@ class MainWindow:
             )
             self._show_error_dialog(
                 title="Capture Error",
-                message=error_info['user_message'],
-                recovery_action=error_info['recovery_action']
+                message=error_info["user_message"],
+                recovery_action=error_info["recovery_action"],
             )
             logger.error(f"Capture error: {error_info['original_message']}")
         finally:
             self._capture_button.config(state=tk.NORMAL)
 
     def _show_error_dialog(
-        self,
-        title: str,
-        message: str,
-        recovery_action: str
+        self, title: str, message: str, recovery_action: str
     ) -> None:
         """Show an error dialog with user-friendly message and recovery action.
-        
+
         Args:
             title: Dialog title
             message: Error message to display
@@ -194,10 +189,7 @@ class MainWindow:
         message_frame.pack(fill="both", expand=True)
 
         message_label = ttk.Label(
-            message_frame,
-            text=message,
-            wraplength=350,
-            font=("Segoe UI", 10)
+            message_frame, text=message, wraplength=350, font=("Segoe UI", 10)
         )
         message_label.pack(pady=(0, 10))
 
@@ -210,7 +202,7 @@ class MainWindow:
             text=f"Recovery: {recovery_action}",
             wraplength=350,
             foreground="orange",
-            font=("Segoe UI", 9, "italic")
+            font=("Segoe UI", 9, "italic"),
         )
         recovery_label.pack()
 
@@ -218,11 +210,7 @@ class MainWindow:
         button_frame = ttk.Frame(dialog, padding="10")
         button_frame.pack(fill="x")
 
-        ok_button = ttk.Button(
-            button_frame,
-            text="OK",
-            command=dialog.destroy
-        )
+        ok_button = ttk.Button(button_frame, text="OK", command=dialog.destroy)
         ok_button.pack(side="right", padx=5)
 
         # Center dialog on parent
@@ -253,7 +241,7 @@ class MainWindow:
             self._show_error_dialog(
                 title="Settings Error",
                 message=f"Failed to open settings: {error_info['user_message']}",
-                recovery_action=error_info['recovery_action']
+                recovery_action=error_info["recovery_action"],
             )
             logger.error(f"Settings error: {error_info['original_message']}")
 
@@ -268,7 +256,7 @@ class MainWindow:
 
         # Update ComfyUI service endpoint and timeout if available
         if self._comfyui_service:
-            self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip('/')
+            self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip("/")
             self._comfyui_service._timeout = settings.api_timeout
 
         # Update orchestrator if available
@@ -278,7 +266,7 @@ class MainWindow:
         # Update status label
         self._status_label.config(
             text=f"Status: Settings applied - {settings.output_folder}",
-            foreground="green"
+            foreground="green",
         )
 
     def _on_quit(self) -> None:
@@ -298,6 +286,7 @@ class MainWindow:
 
                 # Convert to PIL Image for display
                 import numpy as np
+
                 frame = np.frombuffer(frame_data, dtype=np.uint8)
                 frame = frame.reshape((1080, 1920, 3))
 
@@ -328,17 +317,17 @@ class MainWindow:
             feedback_type: Type of feedback ('capture', 'processing', etc.)
         """
         feedback_messages = {
-            'capture': "Capturing...",
-            'processing': "Processing...",
-            'completion': "Processing complete!",
-            'error': "Error occurred",
+            "capture": "Capturing...",
+            "processing": "Processing...",
+            "completion": "Processing complete!",
+            "error": "Error occurred",
         }
 
         message = feedback_messages.get(feedback_type, "")
         self._feedback_label.config(text=message)
 
         # Clear feedback after 2 seconds
-        self._root.after(2000, self._feedback_label.config, {'text': ''})
+        self._root.after(2000, self._feedback_label.config, {"text": ""})
 
     def start(self) -> None:
         """Start the main window and video feed."""
@@ -397,23 +386,20 @@ class MainWindow:
             state = status.state
             queue_size = status.queue_size
 
-            if state == 'processing':
+            if state == "processing":
                 self._status_label.config(
                     text=f"Status: Processing (Queue: {queue_size})",
-                    foreground="orange"
+                    foreground="orange",
                 )
-            elif state == 'completed':
+            elif state == "completed":
                 self._status_label.config(
-                    text="Status: Processing complete",
-                    foreground="green"
+                    text="Status: Processing complete", foreground="green"
                 )
-            elif state == 'error':
+            elif state == "error":
                 self._status_label.config(
-                    text=f"Status: Error - {status.error_message}",
-                    foreground="red"
+                    text=f"Status: Error - {status.error_message}", foreground="red"
                 )
             else:
                 self._status_label.config(
-                    text=f"Status: Ready (Queue: {queue_size})",
-                    foreground="green"
+                    text=f"Status: Ready (Queue: {queue_size})", foreground="green"
                 )

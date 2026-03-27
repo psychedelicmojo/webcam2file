@@ -24,7 +24,7 @@ class IVisualFeedback(ABC):
     @abstractmethod
     def show_error_feedback(self, message: str) -> None:
         """Show visual feedback for errors.
-        
+
         Args:
             message: Error message to display.
         """
@@ -38,7 +38,7 @@ class IVisualFeedback(ABC):
 
 class VisualFeedback(IVisualFeedback):
     """Implementation of visual feedback service.
-    
+
     Provides visual effects like subtle flash/border highlight
     around video feed area during operations.
     """
@@ -65,7 +65,7 @@ class VisualFeedback(IVisualFeedback):
 
     def show_error_feedback(self, message: str) -> None:
         """Show visual feedback for errors.
-        
+
         Args:
             message: Error message to display.
         """
@@ -78,7 +78,7 @@ class VisualFeedback(IVisualFeedback):
 
     def get_current_effect(self) -> str:
         """Get the current visual effect.
-        
+
         Returns:
             str: Current effect name or empty string if none.
         """

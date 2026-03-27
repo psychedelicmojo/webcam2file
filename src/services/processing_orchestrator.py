@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class ProcessingOrchestrator:
     """Orchestrator service for coordinating file monitoring, queue management, and ComfyUI processing.
-    
+
     This service coordinates the end-to-end workflow:
     1. Monitors output folder for new JPEG files
     2. Enqueues captured images for processing
@@ -37,13 +37,9 @@ class ProcessingOrchestrator:
     MAX_RETRIES = 3
     RETRY_DELAY_SECONDS = 2
 
-    def __init__(
-        self,
-        settings: ApplicationSettings,
-        visual_feedback: IVisualFeedback
-    ):
+    def __init__(self, settings: ApplicationSettings, visual_feedback: IVisualFeedback):
         """Initialize the processing orchestrator.
-        
+
         Args:
             settings: Application settings containing ComfyUI endpoint and workflow config
             visual_feedback: Service for visual feedback display
@@ -55,22 +51,18 @@ class ProcessingOrchestrator:
         # Initialize services
         self._capture_queue = CaptureQueue(max_size=100)
         self._comfyui_service = ComfyUIService(
-            endpoint=settings.comfyui_endpoint,
-            timeout=settings.api_timeout
+            endpoint=settings.comfyui_endpoint, timeout=settings.api_timeout
         )
 
         # File monitor callback
-        self._file_monitor = FileMonitorServiceImpl(file_extensions=['.jpg', '.jpeg'])
+        self._file_monitor = FileMonitorServiceImpl(file_extensions=[".jpg", ".jpeg"])
 
         # State management
         self._running = False
         self._monitoring = False
         self._processing_thread: Optional[threading.Thread] = None
         self._status = ProcessingStatus(
-            state='idle',
-            current_image='',
-            error_message='',
-            queue_size=0
+            state="idle", current_image="", error_message="", queue_size=0
         )
 
         # Callbacks
@@ -80,7 +72,7 @@ class ProcessingOrchestrator:
 
     def start(self) -> None:
         """Start the processing orchestrator.
-        
+
         Begins file monitoring and starts the processing worker thread.
         """
         if self._running:
@@ -92,32 +84,34 @@ class ProcessingOrchestrator:
         try:
             self._file_monitor.start_monitoring(
                 folder_path=self._settings.output_folder,
-                on_file_created=self._on_file_created
+                on_file_created=self._on_file_created,
             )
             self._monitoring = True
         except (FolderNotFoundError, FolderAccessError) as e:
-            error_info = self._error_manager.handle_error(e, "Cannot access output folder. Please select a valid folder in settings.")
-            self._status = ProcessingStatus(
-                state='error',
-                current_image='',
-                error_message=error_info['user_message'],
-                queue_size=0
+            error_info = self._error_manager.handle_error(
+                e,
+                "Cannot access output folder. Please select a valid folder in settings.",
             )
-            self._visual_feedback.show_error_feedback(error_info['user_message'])
+            self._status = ProcessingStatus(
+                state="error",
+                current_image="",
+                error_message=error_info["user_message"],
+                queue_size=0,
+            )
+            self._visual_feedback.show_error_feedback(error_info["user_message"])
             logger.error(f"Failed to start orchestrator: {error_info['user_message']}")
             raise
 
         # Start processing worker thread
         self._processing_thread = threading.Thread(
-            target=self._process_queue,
-            daemon=True
+            target=self._process_queue, daemon=True
         )
         self._processing_thread.start()
         logger.info("Processing orchestrator started")
 
     def stop(self) -> None:
         """Stop the processing orchestrator.
-        
+
         Shuts down file monitoring and processing worker thread.
         """
         self._running = False
@@ -135,7 +129,7 @@ class ProcessingOrchestrator:
 
     def _on_file_created(self, filepath: str) -> None:
         """Callback for when a new file is created.
-        
+
         Args:
             filepath: Path to the newly created file.
         """
@@ -144,6 +138,7 @@ class ProcessingOrchestrator:
 
         # Wait for file to be fully written
         from src.lib.file_utils import FileUtils
+
         if not FileUtils.wait_for_file_ready(filepath, timeout=5.0):
             self._visual_feedback.show_error_feedback(
                 f"Could not access file: {filepath}"
@@ -163,14 +158,14 @@ class ProcessingOrchestrator:
 
         # Create ImageCapture object
         filename = Path(filepath).stem
-        timestamp = filename.replace('capture_', '')
+        timestamp = filename.replace("capture_", "")
 
-        image_capture = ImageCapture(
+        ImageCapture(
             timestamp=timestamp,
             filepath=filepath,
             filesize=filesize,
             output_folder=self._settings.output_folder,
-            status='pending'
+            status="pending",
         )
 
         # Enqueue for processing
@@ -204,12 +199,12 @@ class ProcessingOrchestrator:
 
     def _process_image_with_retry(self, filepath: str) -> None:
         """Process a single image through ComfyUI with retry logic.
-        
+
         Args:
             filepath: Path to the image to process.
         """
         last_error = None
-        
+
         for attempt in range(self.MAX_RETRIES):
             try:
                 self._process_image(filepath)
@@ -229,7 +224,9 @@ class ProcessingOrchestrator:
             except APIError as e:
                 # API errors are not retryable, handle immediately
                 last_error = str(e)
-                logger.error(f"Non-retryable API error processing {filepath}: {last_error}")
+                logger.error(
+                    f"Non-retryable API error processing {filepath}: {last_error}"
+                )
                 self._handle_processing_error(filepath, last_error)
                 return
             except Exception as e:
@@ -241,10 +238,10 @@ class ProcessingOrchestrator:
 
     def _process_image(self, filepath: str) -> None:
         """Process a single image through ComfyUI.
-        
+
         Args:
             filepath: Path to the image to process.
-        
+
         Raises:
             APIConnectionError: If connection to ComfyUI fails
             APIError: If ComfyUI returns an error response
@@ -258,7 +255,7 @@ class ProcessingOrchestrator:
         # Load workflow JSON from file
         workflow_path = Path(self._settings.workflow_json_path)
         try:
-            with open(workflow_path, 'r') as f:
+            with open(workflow_path, "r") as f:
                 workflow_json = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             error_msg = f"Failed to load workflow JSON: {str(e)}"
@@ -266,17 +263,16 @@ class ProcessingOrchestrator:
             raise APIError(error_msg) from e
 
         # Create ComfyUI workflow
-        workflow = ComfyUIWorkflow(
+        ComfyUIWorkflow(
             workflow_json=workflow_json,
             input_image_path=filepath,
-            output_location=self._settings.output_folder
+            output_location=self._settings.output_folder,
         )
 
         # Trigger workflow
         try:
             prompt_id = self._comfyui_service.trigger_workflow(
-                workflow_json=workflow_json,
-                input_image_path=filepath
+                workflow_json=workflow_json, input_image_path=filepath
             )
             logger.info(f"Workflow triggered for {filepath}, prompt_id: {prompt_id}")
         except (APIConnectionError, APIError, TimeoutError) as e:
@@ -285,7 +281,7 @@ class ProcessingOrchestrator:
 
         # Wait for completion
         try:
-            result = self._comfyui_service.wait_for_completion(prompt_id)
+            self._comfyui_service.wait_for_completion(prompt_id)
             logger.info(f"Workflow completed for {filepath}")
         except (APIConnectionError, APIError, TimeoutError) as e:
             logger.error(f"Failed to wait for workflow completion for {filepath}: {e}")
@@ -293,15 +289,15 @@ class ProcessingOrchestrator:
 
         # Update status to completed
         self._capture_queue.set_processing_state(ProcessingState.COMPLETED)
-        self._capture_queue.set_current_image('')
+        self._capture_queue.set_current_image("")
 
         # Update image capture status
         image_capture = ImageCapture(
-            timestamp=Path(filepath).stem.replace('capture_', ''),
+            timestamp=Path(filepath).stem.replace("capture_", ""),
             filepath=filepath,
             filesize=Path(filepath).stat().st_size,
             output_folder=self._settings.output_folder,
-            status='completed'
+            status="completed",
         )
 
         if self._on_processing_complete:
@@ -312,22 +308,22 @@ class ProcessingOrchestrator:
 
     def _handle_processing_error(self, filepath: str, error_message: str) -> None:
         """Handle a processing error.
-        
+
         Args:
             filepath: Path to the image that failed.
             error_message: Error message describing the failure.
         """
         # Update status to error
         self._capture_queue.set_processing_state(ProcessingState.ERROR, error_message)
-        self._capture_queue.set_current_image('')
+        self._capture_queue.set_current_image("")
 
         # Update image capture status
         image_capture = ImageCapture(
-            timestamp=Path(filepath).stem.replace('capture_', ''),
+            timestamp=Path(filepath).stem.replace("capture_", ""),
             filepath=filepath,
             filesize=Path(filepath).stat().st_size,
             output_folder=self._settings.output_folder,
-            status='error'
+            status="error",
         )
 
         if self._on_processing_error:
@@ -339,15 +335,15 @@ class ProcessingOrchestrator:
     def _update_status(self) -> None:
         """Update the processing status."""
         state = self._capture_queue.get_processing_state().value
-        current_image = self._capture_queue.get_current_image() or ''
+        current_image = self._capture_queue.get_current_image() or ""
         queue_size = self._capture_queue.get_queue_size()
-        error_message = self._capture_queue.get_error_message() or ''
+        error_message = self._capture_queue.get_error_message() or ""
 
         self._status = ProcessingStatus(
             state=state,
             current_image=current_image,
             error_message=error_message,
-            queue_size=queue_size
+            queue_size=queue_size,
         )
 
         if self._on_status_change:
@@ -355,7 +351,7 @@ class ProcessingOrchestrator:
 
     def is_running(self) -> bool:
         """Check if the orchestrator is running.
-        
+
         Returns:
             bool: True if running, False otherwise.
         """
@@ -363,7 +359,7 @@ class ProcessingOrchestrator:
 
     def is_monitoring(self) -> bool:
         """Check if file monitoring is active.
-        
+
         Returns:
             bool: True if monitoring, False otherwise.
         """
@@ -371,31 +367,37 @@ class ProcessingOrchestrator:
 
     def get_status(self) -> ProcessingStatus:
         """Get the current processing status.
-        
+
         Returns:
             ProcessingStatus: Current status information.
         """
         return self._status
 
-    def set_on_status_change(self, callback: Callable[[ProcessingStatus], None]) -> None:
+    def set_on_status_change(
+        self, callback: Callable[[ProcessingStatus], None]
+    ) -> None:
         """Set callback for status changes.
-        
+
         Args:
             callback: Function to call when status changes.
         """
         self._on_status_change = callback
 
-    def set_on_processing_complete(self, callback: Callable[[ImageCapture], None]) -> None:
+    def set_on_processing_complete(
+        self, callback: Callable[[ImageCapture], None]
+    ) -> None:
         """Set callback for processing completion.
-        
+
         Args:
             callback: Function to call when processing completes.
         """
         self._on_processing_complete = callback
 
-    def set_on_processing_error(self, callback: Callable[[ImageCapture, str], None]) -> None:
+    def set_on_processing_error(
+        self, callback: Callable[[ImageCapture, str], None]
+    ) -> None:
         """Set callback for processing errors.
-        
+
         Args:
             callback: Function to call when processing fails.
         """

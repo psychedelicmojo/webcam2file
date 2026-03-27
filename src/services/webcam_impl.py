@@ -15,14 +15,14 @@ from src.services.webcam_service import (
 
 class WebcamServiceImpl(IWebcamService):
     """Implementation of IWebcamService using OpenCV for video capture.
-    
+
     This service provides HD video capture (1920x1080) from the default webcam.
     It handles webcam initialization, frame capture, and proper resource cleanup.
     """
 
     def __init__(self, webcam_index: int = 0, width: int = 1920, height: int = 1080):
         """Initialize the webcam service.
-        
+
         Args:
             webcam_index: The index of the webcam device (default: 0 for default webcam)
             width: The frame width in pixels (default: 1920 for HD)
@@ -36,10 +36,10 @@ class WebcamServiceImpl(IWebcamService):
 
     def start(self) -> None:
         """Start the webcam video feed.
-        
+
         Initializes the webcam with the configured resolution and starts
         capturing video frames.
-        
+
         Raises:
             WebcamNotFoundError: If no webcam is available at the specified index
             WebcamAccessError: If webcam access is denied (e.g., in use by another app)
@@ -71,7 +71,7 @@ class WebcamServiceImpl(IWebcamService):
 
     def stop(self) -> None:
         """Stop the webcam video feed and release resources.
-        
+
         Releases the webcam capture object and frees system resources.
         """
         if not self._running:
@@ -85,12 +85,12 @@ class WebcamServiceImpl(IWebcamService):
 
     def capture_frame(self) -> bytes:
         """Capture the current video frame.
-        
+
         Reads the current frame from the webcam and encodes it as JPEG.
-        
+
         Returns:
             bytes: JPEG-encoded image data.
-            
+
         Raises:
             WebcamNotStartedError: If start() was not called before capture
             CaptureError: If frame capture fails
@@ -111,7 +111,7 @@ class WebcamServiceImpl(IWebcamService):
             # Encode frame as JPEG
             # OpenCV uses BGR, but JPEG typically expects RGB
             # However, OpenCV's imencode handles BGR correctly for JPEG
-            success, buffer = cv2.imencode('.jpg', frame)
+            success, buffer = cv2.imencode(".jpg", frame)
 
             if not success:
                 raise CaptureError("Failed to encode frame as JPEG")
@@ -123,7 +123,7 @@ class WebcamServiceImpl(IWebcamService):
 
     def is_running(self) -> bool:
         """Check if the webcam is currently running.
-        
+
         Returns:
             bool: True if the webcam is running and capturing frames, False otherwise.
         """
@@ -132,7 +132,7 @@ class WebcamServiceImpl(IWebcamService):
     @property
     def resolution(self) -> tuple:
         """Get the current resolution settings.
-        
+
         Returns:
             tuple: (width, height) of the configured resolution
         """

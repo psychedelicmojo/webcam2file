@@ -152,8 +152,12 @@ class SettingsDialog:
             # Use defaults if settings not loaded
             defaults = self._settings_service.get_default_settings()
             self._output_folder_var.set(defaults.get("output_folder", "captures"))
-            self._comfyui_endpoint_var.set(defaults.get("comfyui_endpoint", "http://127.0.0.1:8188"))
-            self._workflow_json_var.set(defaults.get("workflow_json_path", "workflow.json"))
+            self._comfyui_endpoint_var.set(
+                defaults.get("comfyui_endpoint", "http://127.0.0.1:8188")
+            )
+            self._workflow_json_var.set(
+                defaults.get("workflow_json_path", "workflow.json")
+            )
             self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
 
     def _browse_output_folder(self) -> None:
@@ -236,9 +240,7 @@ class SettingsDialog:
             if timeout < 1:
                 raise ValueError("Timeout must be at least 1 second")
         except ValueError:
-            messagebox.showerror(
-                "Error", "API timeout must be a positive integer"
-            )
+            messagebox.showerror("Error", "API timeout must be a positive integer")
             return False
 
         return True

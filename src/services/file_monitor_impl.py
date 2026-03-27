@@ -17,9 +17,13 @@ from src.services.file_monitor_service import (
 class FileMonitorHandler(FileSystemEventHandler):
     """Custom file system event handler for monitoring new file creation."""
 
-    def __init__(self, on_file_created: Callable[[str], None], file_extensions: Optional[list] = None):
+    def __init__(
+        self,
+        on_file_created: Callable[[str], None],
+        file_extensions: Optional[list] = None,
+    ):
         """Initialize the file monitor handler.
-        
+
         Args:
             on_file_created: Callback function called when a new file is created.
                            Receives the full file path as argument.
@@ -28,13 +32,13 @@ class FileMonitorHandler(FileSystemEventHandler):
         """
         super().__init__()
         self._on_file_created = on_file_created
-        self._file_extensions = file_extensions or ['.jpg', '.jpeg']
+        self._file_extensions = file_extensions or [".jpg", ".jpeg"]
         self._last_event_time = 0
         self._debounce_delay = 0.5  # seconds
 
     def on_created(self, event: FileSystemEvent) -> None:
         """Handle file creation events.
-        
+
         Args:
             event: The file system event object.
         """
@@ -60,7 +64,7 @@ class FileMonitorHandler(FileSystemEventHandler):
 
 class FileMonitorServiceImpl(IFileMonitorService):
     """Implementation of IFileMonitorService using watchdog for file system monitoring.
-    
+
     This service monitors a folder for new JPEG files and triggers callbacks when
     files are created. It handles file system race conditions and filters for
     specific file types.
@@ -68,7 +72,7 @@ class FileMonitorServiceImpl(IFileMonitorService):
 
     def __init__(self, file_extensions: Optional[list] = None):
         """Initialize the file monitor service.
-        
+
         Args:
             file_extensions: List of file extensions to monitor (default: ['.jpg', '.jpeg']).
                            If None, monitors all files.
@@ -77,20 +81,18 @@ class FileMonitorServiceImpl(IFileMonitorService):
         self._handler: Optional[FileMonitorHandler] = None
         self._monitoring = False
         self._folder_path: Optional[str] = None
-        self._file_extensions = file_extensions or ['.jpg', '.jpeg']
+        self._file_extensions = file_extensions or [".jpg", ".jpeg"]
 
     def start_monitoring(
-        self,
-        folder_path: str,
-        on_file_created: Callable[[str], None]
+        self, folder_path: str, on_file_created: Callable[[str], None]
     ) -> None:
         """Start monitoring a folder for new files.
-        
+
         Args:
             folder_path: Path to the folder to monitor.
             on_file_created: Callback function called when a new file is created.
                            Receives the full file path as argument.
-        
+
         Raises:
             FolderNotFoundError: If the folder does not exist.
             FolderAccessError: If folder access is denied.
@@ -128,7 +130,7 @@ class FileMonitorServiceImpl(IFileMonitorService):
 
     def stop_monitoring(self) -> None:
         """Stop monitoring the folder.
-        
+
         Shuts down the observer and releases resources.
         """
         if self._observer is not None:
@@ -142,7 +144,7 @@ class FileMonitorServiceImpl(IFileMonitorService):
 
     def is_monitoring(self) -> bool:
         """Check if monitoring is currently active.
-        
+
         Returns:
             bool: True if monitoring, False otherwise.
         """
@@ -151,7 +153,7 @@ class FileMonitorServiceImpl(IFileMonitorService):
     @property
     def folder_path(self) -> Optional[str]:
         """Get the currently monitored folder path.
-        
+
         Returns:
             Optional[str]: The folder path being monitored, or None if not monitoring.
         """
@@ -160,7 +162,7 @@ class FileMonitorServiceImpl(IFileMonitorService):
     @property
     def file_extensions(self) -> list:
         """Get the file extensions being monitored.
-        
+
         Returns:
             list: List of file extensions being monitored.
         """

@@ -399,37 +399,37 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T046 [P] Documentation updates in docs/
+- [x] T046 [P] Documentation updates in docs/
   - Update README.md with feature description
   - Update quickstart.md with final configuration steps
   - Add API documentation for services
 
-- [ ] T047 [P] Code cleanup and refactoring
+- [x] T047 [P] Code cleanup and refactoring
   - Remove debug print statements
   - Consolidate duplicate code
   - Ensure consistent naming conventions
 
-- [ ] T048 [P] Performance optimization across all stories
+- [x] T048 [P] Performance optimization across all stories
   - Optimize video capture frame rate
   - Optimize file monitoring for low CPU usage
   - Optimize ComfyUI API calls with connection pooling
 
-- [ ] T049 [P] Additional unit tests in `tests/unit/`
+- [x] T049 [P] Additional unit tests in `tests/unit/`
   - Test all utility functions
   - Test edge cases in models
   - Test error handling paths
 
-- [ ] T050 [P] Security hardening
+- [x] T050 [P] Security hardening
   - Validate all user inputs
   - Sanitize file paths
   - Handle sensitive data (API keys if added later)
 
-- [ ] T051 [P] Run quickstart.md validation
+- [x] T051 [P] Run quickstart.md validation
   - Verify installation instructions work
   - Verify configuration steps work
   - Verify troubleshooting section covers common issues
 
-- [ ] T052 [P] Final integration test in `tests/integration/test_full_workflow.py`
+- [x] T052 [P] Final integration test in `tests/integration/test_full_workflow.py`
   - `test_full_workflow`: Verify complete capture → save → monitor → process workflow
   - `test_error_recovery`: Verify system recovers from errors gracefully
   - `test_concurrent_captures`: Verify queue handles multiple captures

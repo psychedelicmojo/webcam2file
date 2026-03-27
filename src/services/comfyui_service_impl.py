@@ -15,36 +15,34 @@ from src.services.comfyui_service import (
 
 class ComfyUIService(IComfyUIService):
     """Implementation of IComfyUIService using requests for ComfyUI API communication.
-    
+
     This service provides methods to trigger ComfyUI workflows, check their status,
     and verify API availability. It handles timeouts and error responses gracefully.
     """
 
     def __init__(self, endpoint: str = "http://127.0.0.1:8188", timeout: int = 30):
         """Initialize the ComfyUI service.
-        
+
         Args:
             endpoint: ComfyUI API endpoint URL (default: http://127.0.0.1:8188)
             timeout: Request timeout in seconds (default: 30)
         """
-        self._endpoint = endpoint.rstrip('/')
+        self._endpoint = endpoint.rstrip("/")
         self._timeout = timeout
         self._session = requests.Session()
 
     def trigger_workflow(
-        self,
-        workflow_json: Dict[str, Any],
-        input_image_path: str
+        self, workflow_json: Dict[str, Any], input_image_path: str
     ) -> str:
         """Trigger a ComfyUI workflow.
-        
+
         Args:
             workflow_json: The ComfyUI workflow configuration.
             input_image_path: Path to the input image.
-        
+
         Returns:
             str: The prompt ID for tracking the workflow.
-        
+
         Raises:
             APIConnectionError: If connection to ComfyUI fails.
             APIError: If ComfyUI returns an error response.
@@ -52,18 +50,11 @@ class ComfyUIService(IComfyUIService):
         """
         try:
             # Prepare the payload with the workflow and input image
-            payload = {
-                "prompt": workflow_json,
-                "inputs": {
-                    "image": input_image_path
-                }
-            }
+            payload = {"prompt": workflow_json, "inputs": {"image": input_image_path}}
 
             # Make the API call
             response = self._session.post(
-                f"{self._endpoint}/prompt",
-                json=payload,
-                timeout=self._timeout
+                f"{self._endpoint}/prompt", json=payload, timeout=self._timeout
             )
 
             # Check for HTTP errors
@@ -108,13 +99,13 @@ class ComfyUIService(IComfyUIService):
 
     def check_status(self, prompt_id: str) -> Dict[str, Any]:
         """Check the status of a workflow.
-        
+
         Args:
             prompt_id: The prompt ID returned from trigger_workflow().
-        
+
         Returns:
             Dict[str, Any]: Workflow status information.
-        
+
         Raises:
             APIConnectionError: If connection to ComfyUI fails.
             APIError: If ComfyUI returns an error response.
@@ -123,8 +114,7 @@ class ComfyUIService(IComfyUIService):
         try:
             # Check workflow history
             response = self._session.get(
-                f"{self._endpoint}/history/{prompt_id}",
-                timeout=self._timeout
+                f"{self._endpoint}/history/{prompt_id}", timeout=self._timeout
             )
 
             # Check for HTTP errors
@@ -137,11 +127,7 @@ class ComfyUIService(IComfyUIService):
                 return result[prompt_id]
 
             # Return empty status if not found
-            return {
-                "prompt_id": prompt_id,
-                "status": "pending",
-                "progress": None
-            }
+            return {"prompt_id": prompt_id, "status": "pending", "progress": None}
 
         except requests.exceptions.ConnectionError as e:
             raise APIConnectionError(
@@ -162,15 +148,14 @@ class ComfyUIService(IComfyUIService):
 
     def is_available(self) -> bool:
         """Check if ComfyUI API is accessible.
-        
+
         Returns:
             bool: True if API is available, False otherwise.
         """
         try:
             # Try to get the server info or check if endpoint responds
             response = self._session.get(
-                f"{self._endpoint}/system_stats",
-                timeout=self._timeout
+                f"{self._endpoint}/system_stats", timeout=self._timeout
             )
             return response.status_code == 200
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
@@ -179,7 +164,7 @@ class ComfyUIService(IComfyUIService):
     @property
     def endpoint(self) -> str:
         """Get the ComfyUI API endpoint.
-        
+
         Returns:
             str: The endpoint URL.
         """
@@ -188,28 +173,25 @@ class ComfyUIService(IComfyUIService):
     @property
     def timeout(self) -> int:
         """Get the request timeout in seconds.
-        
+
         Returns:
             int: The timeout value.
         """
         return self._timeout
 
     def wait_for_completion(
-        self,
-        prompt_id: str,
-        timeout: Optional[int] = None,
-        check_interval: float = 1.0
+        self, prompt_id: str, timeout: Optional[int] = None, check_interval: float = 1.0
     ) -> Dict[str, Any]:
         """Wait for a workflow to complete.
-        
+
         Args:
             prompt_id: The prompt ID to monitor.
             timeout: Maximum time to wait in seconds (default: service timeout).
             check_interval: Time between status checks in seconds (default: 1.0).
-        
+
         Returns:
             Dict[str, Any]: Final workflow status information.
-        
+
         Raises:
             TimeoutError: If workflow doesn't complete within timeout.
         """
@@ -225,7 +207,9 @@ class ComfyUIService(IComfyUIService):
 
             # Check for error
             if status.get("status") == "error":
-                raise APIError(f"Workflow failed: {status.get('error', 'Unknown error')}")
+                raise APIError(
+                    f"Workflow failed: {status.get('error', 'Unknown error')}"
+                )
 
             # Wait before next check
             time.sleep(check_interval)

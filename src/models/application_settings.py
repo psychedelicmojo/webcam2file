@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 @dataclass
 class ApplicationSettings:
     """Represents user-configurable application preferences.
-    
+
     Attributes:
         output_folder: Directory where captured images are saved
         comfyui_endpoint: ComfyUI API endpoint URL
@@ -29,10 +29,10 @@ class ApplicationSettings:
 
     def validate(self) -> bool:
         """Validate all settings.
-        
+
         Returns:
             True if all settings are valid
-            
+
         Raises:
             ValueError: If any setting is invalid
         """
@@ -46,17 +46,13 @@ class ApplicationSettings:
         """Validate output_folder exists and is writable."""
         path = Path(self.output_folder)
         if not path.exists():
-            raise ValueError(
-                f"Output folder does not exist: '{self.output_folder}'"
-            )
+            raise ValueError(f"Output folder does not exist: '{self.output_folder}'")
         if not path.is_dir():
             raise ValueError(
                 f"Output folder is not a directory: '{self.output_folder}'"
             )
         if not os.access(path, os.W_OK):
-            raise ValueError(
-                f"Output folder is not writable: '{self.output_folder}'"
-            )
+            raise ValueError(f"Output folder is not writable: '{self.output_folder}'")
 
     def _validate_comfyui_endpoint(self) -> None:
         """Validate comfyui_endpoint is a valid URL."""
@@ -66,10 +62,9 @@ class ApplicationSettings:
                 raise ValueError(
                     f"Invalid ComfyUI endpoint URL: '{self.comfyui_endpoint}'"
                 )
-            if result.scheme not in ('http', 'https'):
+            if result.scheme not in ("http", "https"):
                 raise ValueError(
-                    f"Invalid URL scheme: '{result.scheme}'. "
-                    f"Must be http or https"
+                    f"Invalid URL scheme: '{result.scheme}'. Must be http or https"
                 )
         except Exception as e:
             raise ValueError(
@@ -92,59 +87,58 @@ class ApplicationSettings:
         """Validate api_timeout is at least 1 second."""
         if not isinstance(self.api_timeout, int) or self.api_timeout < 1:
             raise ValueError(
-                f"Invalid api_timeout: {self.api_timeout}. "
-                f"Must be an integer >= 1"
+                f"Invalid api_timeout: {self.api_timeout}. Must be an integer >= 1"
             )
 
     def to_dict(self) -> dict:
         """Convert the ApplicationSettings to a dictionary.
-        
+
         Returns:
             Dictionary representation of the ApplicationSettings
         """
         return {
-            'output_folder': self.output_folder,
-            'comfyui_endpoint': self.comfyui_endpoint,
-            'workflow_json_path': self.workflow_json_path,
-            'api_timeout': self.api_timeout,
+            "output_folder": self.output_folder,
+            "comfyui_endpoint": self.comfyui_endpoint,
+            "workflow_json_path": self.workflow_json_path,
+            "api_timeout": self.api_timeout,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ApplicationSettings':
+    def from_dict(cls, data: dict) -> "ApplicationSettings":
         """Create an ApplicationSettings from a dictionary.
-        
+
         Args:
             data: Dictionary with ApplicationSettings data
-            
+
         Returns:
             New ApplicationSettings instance
         """
         return cls(
-            output_folder=data['output_folder'],
-            comfyui_endpoint=data['comfyui_endpoint'],
-            workflow_json_path=data['workflow_json_path'],
-            api_timeout=data.get('api_timeout', 30),
+            output_folder=data["output_folder"],
+            comfyui_endpoint=data["comfyui_endpoint"],
+            workflow_json_path=data["workflow_json_path"],
+            api_timeout=data.get("api_timeout", 30),
         )
 
     def save_to_file(self, filepath: str) -> None:
         """Save settings to a JSON file.
-        
+
         Args:
             filepath: Path to the JSON file
         """
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load_from_file(cls, filepath: str) -> 'ApplicationSettings':
+    def load_from_file(cls, filepath: str) -> "ApplicationSettings":
         """Load settings from a JSON file.
-        
+
         Args:
             filepath: Path to the JSON file
-            
+
         Returns:
             ApplicationSettings instance
         """
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             data = json.load(f)
         return cls.from_dict(data)

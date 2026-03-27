@@ -34,9 +34,7 @@ class MockFileMonitorService(IFileMonitorService):
         self._detected_files = []
 
     def start_monitoring(
-        self,
-        folder_path: str,
-        on_file_created: Callable[[str], None]
+        self, folder_path: str, on_file_created: Callable[[str], None]
     ) -> None:
         """Start monitoring a folder for new files."""
         if not Path(folder_path).exists():
@@ -76,21 +74,19 @@ class MockComfyUIService(IComfyUIService):
         self._available = True
         self._prompt_id_counter = 0
 
-    def trigger_workflow(
-        self,
-        workflow_json: dict,
-        input_image_path: str
-    ) -> str:
+    def trigger_workflow(self, workflow_json: dict, input_image_path: str) -> str:
         """Trigger a ComfyUI workflow."""
         if not self._available:
             raise APIConnectionError("Cannot connect to ComfyUI")
         self._prompt_id_counter += 1
         prompt_id = f"prompt_{self._prompt_id_counter}"
-        self._triggered_workflows.append({
-            "prompt_id": prompt_id,
-            "workflow": workflow_json,
-            "input_image": input_image_path
-        })
+        self._triggered_workflows.append(
+            {
+                "prompt_id": prompt_id,
+                "workflow": workflow_json,
+                "input_image": input_image_path,
+            }
+        )
         return prompt_id
 
     def check_status(self, prompt_id: str) -> dict:
@@ -100,7 +96,7 @@ class MockComfyUIService(IComfyUIService):
         return {
             "prompt_id": prompt_id,
             "status": "completed",
-            "output": f"processed_{prompt_id}.jpg"
+            "output": f"processed_{prompt_id}.jpg",
         }
 
     def is_available(self) -> bool:
@@ -146,9 +142,7 @@ class MockCaptureQueue(ICaptureQueue):
         return self._processing_state
 
     def set_processing_state(
-        self,
-        state: ProcessingState,
-        error_message: Optional[str] = None
+        self, state: ProcessingState, error_message: Optional[str] = None
     ) -> None:
         """Set the current processing state."""
         self._processing_state = state
@@ -181,7 +175,7 @@ class TestUserStory2Integration:
 
             # Create a test image file
             filename = FileUtils.generate_unique_filename(
-                prefix='capture', suffix='.jpg'
+                prefix="capture", suffix=".jpg"
             )
             filepath = Path(output_folder) / filename
 
@@ -205,20 +199,16 @@ class TestUserStory2Integration:
         with tempfile.TemporaryDirectory() as output_folder:
             # Setup
             comfyui_service = MockComfyUIService()
-            workflow_json = {
-                "workflow": "test_workflow",
-                "input_image": "placeholder"
-            }
+            workflow_json = {"workflow": "test_workflow", "input_image": "placeholder"}
             input_image_path = Path(output_folder) / "test_image.jpg"
 
             # Create a test image file
-            with open(input_image_path, 'wb') as f:
-                f.write(b'test_image_data')
+            with open(input_image_path, "wb") as f:
+                f.write(b"test_image_data")
 
             # Trigger workflow
             prompt_id = comfyui_service.trigger_workflow(
-                workflow_json,
-                str(input_image_path)
+                workflow_json, str(input_image_path)
             )
 
             # Verify workflow was triggered
@@ -251,14 +241,14 @@ class TestUserStory2Integration:
             filepaths = []
             for _ in range(num_captures):
                 filename = FileUtils.generate_unique_filename(
-                    prefix='capture', suffix='.jpg'
+                    prefix="capture", suffix=".jpg"
                 )
                 filepath = Path(output_folder) / filename
                 filepaths.append(filepath)
 
                 # Create the actual file
-                with open(filepath, 'wb') as f:
-                    f.write(b'test_image_data')
+                with open(filepath, "wb") as f:
+                    f.write(b"test_image_data")
 
                 # Simulate file creation
                 file_monitor.simulate_file_created(str(filepath))
@@ -271,7 +261,7 @@ class TestUserStory2Integration:
             valid_workflow_json = {
                 "nodes": [
                     {"id": 1, "type": "LoadImage"},
-                    {"id": 2, "type": "SaveImage"}
+                    {"id": 2, "type": "SaveImage"},
                 ]
             }
             while capture_queue.get_queue_size() > 0:
@@ -282,11 +272,10 @@ class TestUserStory2Integration:
                     workflow = ComfyUIWorkflow(
                         workflow_json=valid_workflow_json,
                         input_image_path=item,
-                        output_location=output_folder
+                        output_location=output_folder,
                     )
                     prompt_id = comfyui_service.trigger_workflow(
-                        workflow.to_dict(),
-                        workflow.input_image_path
+                        workflow.to_dict(), workflow.input_image_path
                     )
                     # Check status (not used, but part of workflow)
                     _ = comfyui_service.check_status(prompt_id)
@@ -314,13 +303,13 @@ class TestUserStory2Integration:
 
             # Create a test image file
             filename = FileUtils.generate_unique_filename(
-                prefix='capture', suffix='.jpg'
+                prefix="capture", suffix=".jpg"
             )
             filepath = Path(output_folder) / filename
 
             # Create the actual file
-            with open(filepath, 'wb') as f:
-                f.write(b'test_image_data')
+            with open(filepath, "wb") as f:
+                f.write(b"test_image_data")
 
             # Simulate file creation
             file_monitor.simulate_file_created(str(filepath))
@@ -336,19 +325,18 @@ class TestUserStory2Integration:
             valid_workflow_json = {
                 "nodes": [
                     {"id": 1, "type": "LoadImage"},
-                    {"id": 2, "type": "SaveImage"}
+                    {"id": 2, "type": "SaveImage"},
                 ]
             }
             workflow = ComfyUIWorkflow(
                 workflow_json=valid_workflow_json,
                 input_image_path=item,
-                output_location=output_folder
+                output_location=output_folder,
             )
 
             with pytest.raises(APIConnectionError):
                 comfyui_service.trigger_workflow(
-                    workflow.to_dict(),
-                    workflow.input_image_path
+                    workflow.to_dict(), workflow.input_image_path
                 )
 
             # Verify queue state is set to error
@@ -375,13 +363,13 @@ class TestUserStory2Integration:
 
             # Simulate capture and save
             filename = FileUtils.generate_unique_filename(
-                prefix='capture', suffix='.jpg'
+                prefix="capture", suffix=".jpg"
             )
             filepath = Path(output_folder) / filename
 
             # Save image to file
-            with open(filepath, 'wb') as f:
-                f.write(b'test_image_data')
+            with open(filepath, "wb") as f:
+                f.write(b"test_image_data")
 
             # Simulate file detection (file monitor detects new file)
             file_monitor.simulate_file_created(str(filepath))
@@ -397,17 +385,16 @@ class TestUserStory2Integration:
             valid_workflow_json = {
                 "nodes": [
                     {"id": 1, "type": "LoadImage"},
-                    {"id": 2, "type": "SaveImage"}
+                    {"id": 2, "type": "SaveImage"},
                 ]
             }
             workflow = ComfyUIWorkflow(
                 workflow_json=valid_workflow_json,
                 input_image_path=item,
-                output_location=output_folder
+                output_location=output_folder,
             )
             prompt_id = comfyui_service.trigger_workflow(
-                workflow.to_dict(),
-                workflow.input_image_path
+                workflow.to_dict(), workflow.input_image_path
             )
 
             # Check status
@@ -435,7 +422,7 @@ class TestUserStory2Integration:
             num_files = 3
             for _ in range(num_files):
                 filename = FileUtils.generate_unique_filename(
-                    prefix='capture', suffix='.jpg'
+                    prefix="capture", suffix=".jpg"
                 )
                 filepath = Path(output_folder) / filename
 

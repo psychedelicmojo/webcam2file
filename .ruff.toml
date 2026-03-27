@@ -6,6 +6,7 @@ select = ["E", "W", "F", "B", "C4", "I"]
 ignore = []
 
 # Allow auto-fix for selected rules
+[lint]
 fixable = ["E", "W", "F", "I"]
 unfixable = ["B", "C4"]
 
@@ -23,7 +24,9 @@ exclude = [
 # [per-file-ignores]
 
 # Import sorting
-isort = { order-by-type = true, relative-imports-order = "closest-to-furthest" }
+[lint.isort]
+order-by-type = true
+relative-imports-order = "closest-to-furthest"
 
 # Format configuration
 [format]

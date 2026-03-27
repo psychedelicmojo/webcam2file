@@ -36,9 +36,7 @@ class MockCaptureQueue(ICaptureQueue):
         return self._processing_state
 
     def set_processing_state(
-        self,
-        state: ProcessingState,
-        error_message: Optional[str] = None
+        self, state: ProcessingState, error_message: Optional[str] = None
     ) -> None:
         """Set the current processing state."""
         self._processing_state = state

@@ -287,10 +287,10 @@ class TestApplicationSettingsUnit:
 
         # Verify dictionary contents
         assert result == {
-            'output_folder': str(output_folder),
-            'comfyui_endpoint': "http://127.0.0.1:8188",
-            'workflow_json_path': str(workflow_file),
-            'api_timeout': 60,
+            "output_folder": str(output_folder),
+            "comfyui_endpoint": "http://127.0.0.1:8188",
+            "workflow_json_path": str(workflow_file),
+            "api_timeout": 60,
         }
 
     def test_from_dict(self, tmp_path):
@@ -305,10 +305,10 @@ class TestApplicationSettingsUnit:
 
         # Create dictionary
         data = {
-            'output_folder': str(output_folder),
-            'comfyui_endpoint': "http://127.0.0.1:8188",
-            'workflow_json_path': str(workflow_file),
-            'api_timeout': 45,
+            "output_folder": str(output_folder),
+            "comfyui_endpoint": "http://127.0.0.1:8188",
+            "workflow_json_path": str(workflow_file),
+            "api_timeout": 45,
         }
 
         # Create settings from dictionary
@@ -332,9 +332,9 @@ class TestApplicationSettingsUnit:
 
         # Create dictionary without api_timeout
         data = {
-            'output_folder': str(output_folder),
-            'comfyui_endpoint': "http://127.0.0.1:8188",
-            'workflow_json_path': str(workflow_file),
+            "output_folder": str(output_folder),
+            "comfyui_endpoint": "http://127.0.0.1:8188",
+            "workflow_json_path": str(workflow_file),
         }
 
         # Create settings from dictionary
@@ -369,14 +369,14 @@ class TestApplicationSettingsUnit:
         assert settings_file.exists()
 
         # Verify file contents
-        with open(settings_file, 'r') as f:
+        with open(settings_file, "r") as f:
             data = json.load(f)
 
         assert data == {
-            'output_folder': str(output_folder),
-            'comfyui_endpoint': "http://127.0.0.1:8188",
-            'workflow_json_path': str(workflow_file),
-            'api_timeout': 30,
+            "output_folder": str(output_folder),
+            "comfyui_endpoint": "http://127.0.0.1:8188",
+            "workflow_json_path": str(workflow_file),
+            "api_timeout": 30,
         }
 
     def test_load_from_file(self, tmp_path):
@@ -439,8 +439,7 @@ class TestApplicationSettingsUnit:
         assert loaded_settings.output_folder == original_settings.output_folder
         assert loaded_settings.comfyui_endpoint == original_settings.comfyui_endpoint
         assert (
-            loaded_settings.workflow_json_path
-            == original_settings.workflow_json_path
+            loaded_settings.workflow_json_path == original_settings.workflow_json_path
         )
         assert loaded_settings.api_timeout == original_settings.api_timeout
 

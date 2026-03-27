@@ -37,7 +37,7 @@ class MockWebcamService(IWebcamService):
     def __init__(self):
         self._running = False
         self._mock_has_webcam = True
-        self._mock_frame_data = b'fake_jpeg_data'
+        self._mock_frame_data = b"fake_jpeg_data"
         self._raise_error_on_capture = False
 
     def start(self) -> None:
@@ -78,11 +78,7 @@ class MockFileMonitorService(IFileMonitorService):
         self._on_file_created_callback = None
         self._raise_error_on_start = False
 
-    def start_monitoring(
-        self,
-        folder_path: str,
-        on_file_created: callable
-    ) -> None:
+    def start_monitoring(self, folder_path: str, on_file_created: callable) -> None:
         if self._raise_error_on_start:
             raise FolderNotFoundError(f"Folder does not exist: {folder_path}")
         if not Path(folder_path).exists():
@@ -115,19 +111,14 @@ class MockComfyUIService(IComfyUIService):
         self._raise_timeout_error = False
         self._triggered_workflows = []
 
-    def trigger_workflow(
-        self,
-        workflow_json: dict,
-        input_image_path: str
-    ) -> str:
+    def trigger_workflow(self, workflow_json: dict, input_image_path: str) -> str:
         if self._raise_connection_error:
             raise APIConnectionError("Cannot connect to ComfyUI")
         if self._raise_timeout_error:
             raise TimeoutError("Request timed out")
-        self._triggered_workflows.append({
-            "workflow": workflow_json,
-            "input_image": input_image_path
-        })
+        self._triggered_workflows.append(
+            {"workflow": workflow_json, "input_image": input_image_path}
+        )
         return f"prompt_{len(self._triggered_workflows)}"
 
     def check_status(self, prompt_id: str) -> dict:
@@ -138,7 +129,7 @@ class MockComfyUIService(IComfyUIService):
         return {
             "prompt_id": prompt_id,
             "status": "completed",
-            "output": f"processed_{prompt_id}.jpg"
+            "output": f"processed_{prompt_id}.jpg",
         }
 
     def is_available(self) -> bool:
@@ -186,9 +177,7 @@ class MockCaptureQueue(ICaptureQueue):
         return self._processing_state
 
     def set_processing_state(
-        self,
-        state: ProcessingState,
-        error_message: str = None
+        self, state: ProcessingState, error_message: str = None
     ) -> None:
         self._processing_state = state
         self._error_message = error_message
@@ -240,6 +229,7 @@ class MockVisualFeedback(IVisualFeedback):
 
 class QueueFullError(Exception):
     """Raised when the queue is full and cannot accept more items."""
+
     pass
 
 
@@ -264,11 +254,14 @@ class TestUserStory4ErrorHandling:
             webcam_service.start()
         except WebcamNotFoundError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'No webcam detected. Please connect a webcam and try again.'
-            assert result['recovery_action'] == 'Connect webcam'
+            assert (
+                result["user_message"]
+                == "No webcam detected. Please connect a webcam and try again."
+            )
+            assert result["recovery_action"] == "Connect webcam"
 
         # Verify visual feedback shows error
-        visual_feedback.show_error_feedback(result['user_message'])
+        visual_feedback.show_error_feedback(result["user_message"])
         assert visual_feedback.get_current_effect() == "error"
         assert "No webcam detected" in visual_feedback.get_error_message()
 
@@ -276,7 +269,7 @@ class TestUserStory4ErrorHandling:
         """Verify error handling when webcam access is denied."""
         error_manager = ErrorManager()
         webcam_service = MockWebcamService()
-        visual_feedback = MockVisualFeedback()
+        MockVisualFeedback()
 
         # Simulate access denied by raising WebcamAccessError
         webcam_service._mock_has_webcam = True
@@ -291,14 +284,17 @@ class TestUserStory4ErrorHandling:
             raise WebcamAccessError("Cannot access webcam")
         except WebcamAccessError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'Cannot access webcam. Close other applications using the webcam and try again.'
-            assert result['recovery_action'] == 'Close other apps'
+            assert (
+                result["user_message"]
+                == "Cannot access webcam. Close other applications using the webcam and try again."
+            )
+            assert result["recovery_action"] == "Close other apps"
 
     def test_capture_error(self):
         """Verify error handling when frame capture fails."""
         error_manager = ErrorManager()
         webcam_service = MockWebcamService()
-        visual_feedback = MockVisualFeedback()
+        MockVisualFeedback()
 
         # Start webcam successfully
         webcam_service.set_has_webcam(True)
@@ -316,8 +312,11 @@ class TestUserStory4ErrorHandling:
             webcam_service.capture_frame()
         except CaptureError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'An unexpected error occurred. Please try again.'
-            assert result['recovery_action'] == 'Retry operation'
+            assert (
+                result["user_message"]
+                == "An unexpected error occurred. Please try again."
+            )
+            assert result["recovery_action"] == "Retry operation"
 
     def test_comfyui_unavailable(self):
         """Verify error handling when ComfyUI is down."""
@@ -340,11 +339,14 @@ class TestUserStory4ErrorHandling:
             comfyui_service.trigger_workflow(workflow_json, input_image_path)
         except APIConnectionError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'Cannot connect to ComfyUI. Make sure ComfyUI is running and try again.'
-            assert result['recovery_action'] == 'Start ComfyUI'
+            assert (
+                result["user_message"]
+                == "Cannot connect to ComfyUI. Make sure ComfyUI is running and try again."
+            )
+            assert result["recovery_action"] == "Start ComfyUI"
 
         # Verify visual feedback shows error
-        visual_feedback.show_error_feedback(result['user_message'])
+        visual_feedback.show_error_feedback(result["user_message"])
         assert visual_feedback.get_current_effect() == "error"
         assert "Cannot connect to ComfyUI" in visual_feedback.get_error_message()
 
@@ -352,7 +354,7 @@ class TestUserStory4ErrorHandling:
         """Verify error handling when ComfyUI request times out."""
         error_manager = ErrorManager()
         comfyui_service = MockComfyUIService()
-        visual_feedback = MockVisualFeedback()
+        MockVisualFeedback()
 
         # Make ComfyUI raise timeout error
         comfyui_service.set_raise_timeout_error(True)
@@ -369,8 +371,11 @@ class TestUserStory4ErrorHandling:
             comfyui_service.trigger_workflow(workflow_json, input_image_path)
         except TimeoutError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'Request to ComfyUI timed out. Check your network connection and try again.'
-            assert result['recovery_action'] == 'Retry request'
+            assert (
+                result["user_message"]
+                == "Request to ComfyUI timed out. Check your network connection and try again."
+            )
+            assert result["recovery_action"] == "Retry request"
 
     def test_folder_not_found(self):
         """Verify error handling when output folder does not exist."""
@@ -389,8 +394,11 @@ class TestUserStory4ErrorHandling:
             file_monitor.start_monitoring(non_existent_folder, capture_queue.enqueue)
         except FolderNotFoundError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'Output folder not found. Please select a valid folder in settings.'
-            assert result['recovery_action'] == 'Select valid folder'
+            assert (
+                result["user_message"]
+                == "Output folder not found. Please select a valid folder in settings."
+            )
+            assert result["recovery_action"] == "Select valid folder"
 
     def test_folder_access_denied(self):
         """Verify error handling when folder access is denied."""
@@ -401,8 +409,11 @@ class TestUserStory4ErrorHandling:
             raise FolderAccessError("Cannot access folder")
         except FolderAccessError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'Cannot access output folder. Check permissions and try again.'
-            assert result['recovery_action'] == 'Check permissions'
+            assert (
+                result["user_message"]
+                == "Cannot access output folder. Check permissions and try again."
+            )
+            assert result["recovery_action"] == "Check permissions"
 
     def test_queue_overflow(self):
         """Verify error handling when queue is full."""
@@ -418,14 +429,14 @@ class TestUserStory4ErrorHandling:
             capture_queue.enqueue("/test/image3.jpg")
         except QueueFullError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'An unexpected error occurred. Please try again.'
-            assert result['recovery_action'] == 'Retry operation'
+            assert (
+                result["user_message"]
+                == "An unexpected error occurred. Please try again."
+            )
+            assert result["recovery_action"] == "Retry operation"
 
             # Set queue state to error
-            capture_queue.set_processing_state(
-                ProcessingState.ERROR,
-                "Queue is full"
-            )
+            capture_queue.set_processing_state(ProcessingState.ERROR, "Queue is full")
             assert capture_queue.get_processing_state() == ProcessingState.ERROR
             assert capture_queue.get_error_message() == "Queue is full"
 
@@ -437,21 +448,26 @@ class TestUserStory4ErrorHandling:
         large_file_error = ValueError("File size exceeds 5MB limit")
 
         result = error_manager.handle_error(large_file_error)
-        assert result['user_message'] == 'An unexpected error occurred. Please try again.'
-        assert result['recovery_action'] == 'Retry operation'
+        assert (
+            result["user_message"] == "An unexpected error occurred. Please try again."
+        )
+        assert result["recovery_action"] == "Retry operation"
 
     def test_workflow_error(self):
         """Verify error handling for ComfyUI workflow failures."""
         error_manager = ErrorManager()
-        comfyui_service = MockComfyUIService()
+        MockComfyUIService()
 
         # Simulate workflow error
         try:
             raise APIError("Workflow execution failed")
         except APIError as e:
             result = error_manager.handle_error(e)
-            assert result['user_message'] == 'ComfyUI returned an error. Check the workflow configuration and try again.'
-            assert result['recovery_action'] == 'Check workflow'
+            assert (
+                result["user_message"]
+                == "ComfyUI returned an error. Check the workflow configuration and try again."
+            )
+            assert result["recovery_action"] == "Check workflow"
 
     def test_error_recovery_flow(self):
         """Verify complete error recovery flow."""
@@ -469,9 +485,9 @@ class TestUserStory4ErrorHandling:
             result = error_manager.handle_error(error)
 
             # Show error feedback
-            visual_feedback.show_error_feedback(result['user_message'])
+            visual_feedback.show_error_feedback(result["user_message"])
             assert visual_feedback.get_current_effect() == "error"
-            assert result['user_message'] in visual_feedback.get_error_message()
+            assert result["user_message"] in visual_feedback.get_error_message()
 
             # Clear feedback
             visual_feedback.hide_feedback()
@@ -482,20 +498,20 @@ class TestUserStory4ErrorHandling:
         error_manager = ErrorManager()
 
         error_types = [
-            (WebcamNotFoundError("test"), 'WebcamNotFoundError'),
-            (WebcamAccessError("test"), 'WebcamAccessError'),
-            (FolderNotFoundError("test"), 'FolderNotFoundError'),
-            (FolderAccessError("test"), 'FolderAccessError'),
-            (APIConnectionError("test"), 'APIConnectionError'),
-            (APIError("test"), 'APIError'),
-            (TimeoutError("test"), 'TimeoutError'),
+            (WebcamNotFoundError("test"), "WebcamNotFoundError"),
+            (WebcamAccessError("test"), "WebcamAccessError"),
+            (FolderNotFoundError("test"), "FolderNotFoundError"),
+            (FolderAccessError("test"), "FolderAccessError"),
+            (APIConnectionError("test"), "APIConnectionError"),
+            (APIError("test"), "APIError"),
+            (TimeoutError("test"), "TimeoutError"),
         ]
 
         for error, expected_type in error_types:
             result = error_manager.handle_error(error)
-            assert result['error_type'] == expected_type
-            assert 'user_message' in result
-            assert 'recovery_action' in result
+            assert result["error_type"] == expected_type
+            assert "user_message" in result
+            assert "recovery_action" in result
 
     def test_error_manager_is_recoverable(self):
         """Verify ErrorManager correctly identifies recoverable errors."""
@@ -509,6 +525,7 @@ class TestUserStory4ErrorHandling:
         # Test unknown error type
         class CustomError(Exception):
             pass
+
         assert error_manager.is_recoverable(CustomError("test")) is False
 
     def test_full_error_handling_workflow(self):
@@ -530,7 +547,7 @@ class TestUserStory4ErrorHandling:
                 webcam_service.start()
             except WebcamNotFoundError as e:
                 result = error_manager.handle_error(e)
-                visual_feedback.show_error_feedback(result['user_message'])
+                visual_feedback.show_error_feedback(result["user_message"])
                 assert visual_feedback.get_current_effect() == "error"
 
             # Clear feedback
@@ -541,7 +558,7 @@ class TestUserStory4ErrorHandling:
                 file_monitor.start_monitoring(output_folder, lambda x: None)
             except FolderNotFoundError as e:
                 result = error_manager.handle_error(e)
-                visual_feedback.show_error_feedback(result['user_message'])
+                visual_feedback.show_error_feedback(result["user_message"])
                 assert visual_feedback.get_current_effect() == "error"
 
             # Clear feedback
@@ -552,5 +569,5 @@ class TestUserStory4ErrorHandling:
                 comfyui_service.trigger_workflow({"nodes": []}, "/test.jpg")
             except APIConnectionError as e:
                 result = error_manager.handle_error(e)
-                visual_feedback.show_error_feedback(result['user_message'])
+                visual_feedback.show_error_feedback(result["user_message"])
                 assert visual_feedback.get_current_effect() == "error"

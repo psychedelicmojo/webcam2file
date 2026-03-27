@@ -8,7 +8,7 @@ from pathlib import Path
 @dataclass
 class ImageCapture:
     """Represents a single frame captured from the webcam.
-    
+
     Attributes:
         timestamp: Timestamp of capture in YYYYMMDD_HHmmss format
         filepath: Full path to the saved JPEG file
@@ -24,8 +24,8 @@ class ImageCapture:
     status: str = "pending"
 
     # Validation patterns
-    TIMESTAMP_PATTERN = re.compile(r'^\d{8}_\d{6}$')
-    JPEG_EXTENSION = '.jpg'
+    TIMESTAMP_PATTERN = re.compile(r"^\d{8}_\d{6}$")
+    JPEG_EXTENSION = ".jpg"
 
     def __post_init__(self) -> None:
         """Validate the image capture data after initialization."""
@@ -47,16 +47,14 @@ class ImageCapture:
         """Validate filepath ends with .jpg extension."""
         if not self.filepath.endswith(self.JPEG_EXTENSION):
             raise ValueError(
-                f"Invalid filepath: '{self.filepath}'. "
-                f"File must have .jpg extension"
+                f"Invalid filepath: '{self.filepath}'. File must have .jpg extension"
             )
 
     def _validate_filesize(self) -> None:
         """Validate filesize is greater than 0."""
         if self.filesize <= 0:
             raise ValueError(
-                f"Invalid filesize: {self.filesize}. "
-                f"Filesize must be greater than 0"
+                f"Invalid filesize: {self.filesize}. Filesize must be greater than 0"
             )
 
     def _validate_output_folder(self) -> None:
@@ -70,7 +68,7 @@ class ImageCapture:
 
     def _validate_status(self) -> None:
         """Validate status is one of the allowed values."""
-        valid_statuses = {'pending', 'processing', 'completed', 'error'}
+        valid_statuses = {"pending", "processing", "completed", "error"}
         if self.status not in valid_statuses:
             raise ValueError(
                 f"Invalid status: '{self.status}'. "
@@ -79,14 +77,14 @@ class ImageCapture:
 
     def update_status(self, new_status: str) -> None:
         """Update the processing status with validation.
-        
+
         Args:
             new_status: The new status value
-            
+
         Raises:
             ValueError: If the new status is invalid
         """
-        valid_statuses = {'pending', 'processing', 'completed', 'error'}
+        valid_statuses = {"pending", "processing", "completed", "error"}
         if new_status not in valid_statuses:
             raise ValueError(
                 f"Invalid status: '{new_status}'. "
@@ -96,32 +94,32 @@ class ImageCapture:
 
     def to_dict(self) -> dict:
         """Convert the ImageCapture to a dictionary.
-        
+
         Returns:
             Dictionary representation of the ImageCapture
         """
         return {
-            'timestamp': self.timestamp,
-            'filepath': self.filepath,
-            'filesize': self.filesize,
-            'output_folder': self.output_folder,
-            'status': self.status,
+            "timestamp": self.timestamp,
+            "filepath": self.filepath,
+            "filesize": self.filesize,
+            "output_folder": self.output_folder,
+            "status": self.status,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ImageCapture':
+    def from_dict(cls, data: dict) -> "ImageCapture":
         """Create an ImageCapture from a dictionary.
-        
+
         Args:
             data: Dictionary with ImageCapture data
-            
+
         Returns:
             New ImageCapture instance
         """
         return cls(
-            timestamp=data['timestamp'],
-            filepath=data['filepath'],
-            filesize=data['filesize'],
-            output_folder=data['output_folder'],
-            status=data.get('status', 'pending'),
+            timestamp=data["timestamp"],
+            filepath=data["filepath"],
+            filesize=data["filesize"],
+            output_folder=data["output_folder"],
+            status=data.get("status", "pending"),
         )

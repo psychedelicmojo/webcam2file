@@ -21,7 +21,7 @@ class MockWebcamService(IWebcamService):
     def start(self) -> None:
         """Start the webcam video feed."""
         # Simulate webcam not found
-        if not hasattr(self, '_mock_has_webcam') or not self._mock_has_webcam:
+        if not hasattr(self, "_mock_has_webcam") or not self._mock_has_webcam:
             raise WebcamNotFoundError("No webcam available")
 
         self._cap = MagicMock()
@@ -43,7 +43,7 @@ class MockWebcamService(IWebcamService):
             raise WebcamNotStartedError("Webcam is not started")
 
         # Return mock JPEG data
-        return b'fake_jpeg_data'
+        return b"fake_jpeg_data"
 
     def is_running(self) -> bool:
         """Check if the webcam is currently running."""

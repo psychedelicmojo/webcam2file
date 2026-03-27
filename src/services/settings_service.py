@@ -66,7 +66,7 @@ class SettingsService:
                 "Please configure settings first."
             )
 
-        with open(self._settings_file, 'r') as f:
+        with open(self._settings_file, "r") as f:
             data = json.load(f)
 
         self._current_settings = ApplicationSettings.from_dict(data)
@@ -124,14 +124,18 @@ class SettingsService:
             is_available = service.is_available()
 
             if is_available:
-                logger.info(f"Successfully connected to ComfyUI at {settings.comfyui_endpoint}")
+                logger.info(
+                    f"Successfully connected to ComfyUI at {settings.comfyui_endpoint}"
+                )
                 return {
                     "success": "true",
                     "message": f"Connected to ComfyUI at {settings.comfyui_endpoint}",
                     "endpoint": settings.comfyui_endpoint,
                 }
             else:
-                logger.warning(f"Failed to connect to ComfyUI at {settings.comfyui_endpoint}")
+                logger.warning(
+                    f"Failed to connect to ComfyUI at {settings.comfyui_endpoint}"
+                )
                 return {
                     "success": "false",
                     "message": f"Cannot connect to ComfyUI at {settings.comfyui_endpoint}",
@@ -139,7 +143,9 @@ class SettingsService:
                 }
 
         except APIConnectionError as e:
-            logger.error(f"API connection error when testing ComfyUI at {settings.comfyui_endpoint}: {str(e)}")
+            logger.error(
+                f"API connection error when testing ComfyUI at {settings.comfyui_endpoint}: {str(e)}"
+            )
             return {
                 "success": "false",
                 "message": str(e),
@@ -147,7 +153,9 @@ class SettingsService:
             }
         except Exception as e:
             error_info = self._error_manager.handle_error(e)
-            logger.error(f"Error testing ComfyUI connection at {settings.comfyui_endpoint}: {error_info['user_message']}")
+            logger.error(
+                f"Error testing ComfyUI connection at {settings.comfyui_endpoint}: {error_info['user_message']}"
+            )
             return {
                 "success": "false",
                 "message": error_info["user_message"],
@@ -181,15 +189,21 @@ class SettingsService:
                 logger.info(f"Creating output folder: '{settings.output_folder}'")
                 path.mkdir(parents=True, exist_ok=True)
             if not path.is_dir():
-                logger.error(f"Output folder is not a directory: '{settings.output_folder}'")
+                logger.error(
+                    f"Output folder is not a directory: '{settings.output_folder}'"
+                )
                 return False
             if not os.access(path, os.W_OK):
-                logger.error(f"Output folder is not writable: '{settings.output_folder}'")
+                logger.error(
+                    f"Output folder is not writable: '{settings.output_folder}'"
+                )
                 return False
             logger.debug(f"Output folder is ready: '{settings.output_folder}'")
             return True
         except Exception as e:
-            logger.error(f"Error ensuring output folder '{settings.output_folder}' exists: {str(e)}")
+            logger.error(
+                f"Error ensuring output folder '{settings.output_folder}' exists: {str(e)}"
+            )
             return False
 
     def get_default_settings(self) -> Dict[str, str]:

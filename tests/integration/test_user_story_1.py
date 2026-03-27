@@ -25,10 +25,10 @@ class MockWebcamService(IWebcamService):
 
     def __init__(self):
         self._running = False
-        self._mock_frame_data = b'fake_jpeg_data'
+        self._mock_frame_data = b"fake_jpeg_data"
 
     def start(self) -> None:
-        if not hasattr(self, '_mock_has_webcam') or not self._mock_has_webcam:
+        if not hasattr(self, "_mock_has_webcam") or not self._mock_has_webcam:
             raise WebcamNotFoundError("No webcam available")
         self._running = True
 
@@ -96,13 +96,15 @@ class TestUserStory1Integration:
 
             # Capture frame
             frame_data = webcam_service.capture_frame()
-            assert frame_data == b'fake_jpeg_data'
+            assert frame_data == b"fake_jpeg_data"
 
             # Save to file
-            filename = FileUtils.generate_unique_filename(prefix='capture', suffix='.jpg')
+            filename = FileUtils.generate_unique_filename(
+                prefix="capture", suffix=".jpg"
+            )
             filepath = Path(output_folder) / filename
 
-            with open(filepath, 'wb') as f:
+            with open(filepath, "wb") as f:
                 f.write(frame_data)
 
             # Verify file was created
@@ -111,15 +113,15 @@ class TestUserStory1Integration:
 
             # Create ImageCapture
             image_capture = ImageCapture(
-                timestamp=filename.replace('.jpg', '').replace('capture_', ''),
+                timestamp=filename.replace(".jpg", "").replace("capture_", ""),
                 filepath=str(filepath),
                 filesize=filepath.stat().st_size,
                 output_folder=output_folder,
-                status='pending'
+                status="pending",
             )
 
             # Verify ImageCapture
-            assert image_capture.status == 'pending'
+            assert image_capture.status == "pending"
             assert image_capture.filepath == str(filepath)
             assert image_capture.filesize > 0
 
@@ -131,7 +133,7 @@ class TestUserStory1Integration:
         with tempfile.TemporaryDirectory() as output_folder:
             webcam_service = MockWebcamService()
             webcam_service._mock_has_webcam = True
-            visual_feedback = MockVisualFeedback()
+            MockVisualFeedback()
 
             webcam_service.start()
 
@@ -140,15 +142,19 @@ class TestUserStory1Integration:
             for i in range(3):
                 # Wait for timestamp to change before generating filename
                 if i > 0:
-                    time.sleep(1.0)  # Wait for timestamp to change (file_utils uses seconds)
+                    time.sleep(
+                        1.0
+                    )  # Wait for timestamp to change (file_utils uses seconds)
                 frame_data = webcam_service.capture_frame()
-                filename = FileUtils.generate_unique_filename(prefix='capture', suffix='.jpg')
+                filename = FileUtils.generate_unique_filename(
+                    prefix="capture", suffix=".jpg"
+                )
                 filepath = Path(output_folder) / filename
 
-                with open(filepath, 'wb') as f:
+                with open(filepath, "wb") as f:
                     f.write(frame_data)
 
-                timestamps.append(filename.replace('.jpg', '').replace('capture_', ''))
+                timestamps.append(filename.replace(".jpg", "").replace("capture_", ""))
 
             # Verify all timestamps are unique
             assert len(set(timestamps)) == 3
@@ -163,7 +169,7 @@ class TestUserStory1Integration:
         with tempfile.TemporaryDirectory() as output_folder:
             webcam_service = MockWebcamService()
             webcam_service._mock_has_webcam = True
-            visual_feedback = MockVisualFeedback()
+            MockVisualFeedback()
 
             # Start webcam
             webcam_service.start()
@@ -172,10 +178,12 @@ class TestUserStory1Integration:
             captured_files = []
             for i in range(3):
                 frame_data = webcam_service.capture_frame()
-                filename = FileUtils.generate_unique_filename(prefix='capture', suffix='.jpg')
+                filename = FileUtils.generate_unique_filename(
+                    prefix="capture", suffix=".jpg"
+                )
                 filepath = Path(output_folder) / filename
 
-                with open(filepath, 'wb') as f:
+                with open(filepath, "wb") as f:
                     f.write(frame_data)
 
                 captured_files.append(str(filepath))
@@ -189,7 +197,7 @@ class TestUserStory1Integration:
         """Test that capture fails appropriately when webcam is not started."""
         webcam_service = MockWebcamService()
         webcam_service._mock_has_webcam = True
-        visual_feedback = MockVisualFeedback()
+        MockVisualFeedback()
 
         # Try to capture without starting webcam
         with pytest.raises(CaptureError):
@@ -199,7 +207,7 @@ class TestUserStory1Integration:
         """Test that capture fails appropriately when no webcam is available."""
         webcam_service = MockWebcamService()
         webcam_service._mock_has_webcam = False
-        visual_feedback = MockVisualFeedback()
+        MockVisualFeedback()
 
         # Try to start webcam without one
         with pytest.raises(WebcamNotFoundError):

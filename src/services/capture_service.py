@@ -1,6 +1,5 @@
 """Service for capturing images from webcam and saving to file system."""
 
-import logging
 from pathlib import Path
 
 from src.lib.error_manager import ErrorManager
@@ -9,8 +8,8 @@ from src.services.visual_feedback import IVisualFeedback
 from src.services.webcam_service import (
     CaptureError,
     IWebcamService,
-    WebcamNotFoundError,
     WebcamAccessError,
+    WebcamNotFoundError,
     WebcamNotStartedError,
 )
 
@@ -22,10 +21,10 @@ class CaptureService:
         self,
         webcam_service: IWebcamService,
         visual_feedback: IVisualFeedback,
-        output_folder: str
+        output_folder: str,
     ):
         """Initialize the capture service.
-        
+
         Args:
             webcam_service: Service for webcam video capture
             visual_feedback: Service for visual feedback display
@@ -38,10 +37,10 @@ class CaptureService:
 
     def capture(self) -> ImageCapture:
         """Capture a frame from the webcam and save it to the output folder.
-        
+
         Returns:
             ImageCapture: The captured image information
-        
+
         Raises:
             WebcamNotFoundError: If no webcam is available
             WebcamAccessError: If webcam access is denied
@@ -58,14 +57,14 @@ class CaptureService:
 
             # Generate unique filename
             from src.lib.file_utils import FileUtils
+
             filename = FileUtils.generate_unique_filename(
-                prefix='capture',
-                suffix='.jpg'
+                prefix="capture", suffix=".jpg"
             )
             filepath = Path(self._output_folder) / filename
 
             # Save frame to file
-            with open(filepath, 'wb') as f:
+            with open(filepath, "wb") as f:
                 f.write(frame_data)
 
             # Get file size
@@ -73,11 +72,11 @@ class CaptureService:
 
             # Create ImageCapture object
             image_capture = ImageCapture(
-                timestamp=filename.replace('.jpg', '').replace('capture_', ''),
+                timestamp=filename.replace(".jpg", "").replace("capture_", ""),
                 filepath=str(filepath),
                 filesize=filesize,
                 output_folder=self._output_folder,
-                status='pending'
+                status="pending",
             )
 
             # Hide feedback
@@ -87,16 +86,21 @@ class CaptureService:
 
         except WebcamNotFoundError as e:
             self._visual_feedback.hide_feedback()
-            error_info = self._error_manager.handle_error(e, "No webcam detected. Please connect a webcam and try again.")
-            raise CaptureError(error_info['user_message']) from e
+            error_info = self._error_manager.handle_error(
+                e, "No webcam detected. Please connect a webcam and try again."
+            )
+            raise CaptureError(error_info["user_message"]) from e
         except WebcamAccessError as e:
             self._visual_feedback.hide_feedback()
-            error_info = self._error_manager.handle_error(e, "Cannot access webcam. Close other applications using the webcam and try again.")
-            raise CaptureError(error_info['user_message']) from e
+            error_info = self._error_manager.handle_error(
+                e,
+                "Cannot access webcam. Close other applications using the webcam and try again.",
+            )
+            raise CaptureError(error_info["user_message"]) from e
         except WebcamNotStartedError:
             self._visual_feedback.hide_feedback()
             raise
         except Exception as e:
             self._visual_feedback.hide_feedback()
             error_info = self._error_manager.handle_error(e, "Failed to capture frame.")
-            raise CaptureError(error_info['user_message']) from e
+            raise CaptureError(error_info["user_message"]) from e

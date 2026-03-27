@@ -15,7 +15,7 @@ class MockWebcamService(IWebcamService):
 
     def __init__(self):
         self._running = False
-        self._mock_frame_data = b'fake_jpeg_data'
+        self._mock_frame_data = b"fake_jpeg_data"
 
     def start(self) -> None:
         self._running = True
@@ -75,11 +75,12 @@ class TestCaptureServiceContract:
 
         # Create temporary output folder
         import tempfile
+
         with tempfile.TemporaryDirectory() as output_folder:
             service = CaptureService(
                 webcam_service=webcam_service,
                 visual_feedback=visual_feedback,
-                output_folder=output_folder
+                output_folder=output_folder,
             )
 
             # Capture image
@@ -87,8 +88,8 @@ class TestCaptureServiceContract:
 
             # Verify results
             assert isinstance(result, ImageCapture)
-            assert result.status == 'pending'
-            assert result.filepath.endswith('.jpg')
+            assert result.status == "pending"
+            assert result.filepath.endswith(".jpg")
             assert Path(result.filepath).exists()
             assert result.filesize > 0
             assert result.output_folder == output_folder
@@ -100,11 +101,12 @@ class TestCaptureServiceContract:
         visual_feedback = MockVisualFeedback()
 
         import tempfile
+
         with tempfile.TemporaryDirectory() as output_folder:
             service = CaptureService(
                 webcam_service=webcam_service,
                 visual_feedback=visual_feedback,
-                output_folder=output_folder
+                output_folder=output_folder,
             )
 
             service.capture()
@@ -119,11 +121,12 @@ class TestCaptureServiceContract:
         visual_feedback = MockVisualFeedback()
 
         import tempfile
+
         with tempfile.TemporaryDirectory() as output_folder:
             service = CaptureService(
                 webcam_service=webcam_service,
                 visual_feedback=visual_feedback,
-                output_folder=output_folder
+                output_folder=output_folder,
             )
 
             with pytest.raises(Exception):
@@ -138,11 +141,12 @@ class TestCaptureServiceContract:
         visual_feedback = MockVisualFeedback()
 
         import tempfile
+
         with tempfile.TemporaryDirectory() as output_folder:
             service = CaptureService(
                 webcam_service=webcam_service,
                 visual_feedback=visual_feedback,
-                output_folder=output_folder
+                output_folder=output_folder,
             )
 
             # Capture multiple images with a small delay

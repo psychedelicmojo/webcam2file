@@ -41,8 +41,7 @@ class TestUserStory3Integration:
         assert loaded_settings.output_folder == original_settings.output_folder
         assert loaded_settings.comfyui_endpoint == original_settings.comfyui_endpoint
         assert (
-            loaded_settings.workflow_json_path
-            == original_settings.workflow_json_path
+            loaded_settings.workflow_json_path == original_settings.workflow_json_path
         )
         assert loaded_settings.api_timeout == original_settings.api_timeout
 
@@ -131,10 +130,7 @@ class TestUserStory3Integration:
             "nodes": {
                 "1": {
                     "class_type": "LoadImage",
-                    "inputs": {
-                        "image": "example.jpg",
-                        "upload": "image"
-                    }
+                    "inputs": {"image": "example.jpg", "upload": "image"},
                 },
                 "2": {
                     "class_type": "KSampler",
@@ -142,19 +138,15 @@ class TestUserStory3Integration:
                         "model": ["1", 0],
                         "positive": ["1", 1],
                         "negative": ["1", 2],
-                        "seed": 12345
-                    }
-                }
+                        "seed": 12345,
+                    },
+                },
             },
-            "links": [
-                [1, 0, 2, 0],
-                [1, 1, 2, 1],
-                [1, 2, 2, 2]
-            ],
+            "links": [[1, 0, 2, 0], [1, 1, 2, 1], [1, 2, 2, 2]],
             "groups": [],
             "config": {},
             "extra": {},
-            "version": 0.4
+            "version": 0.4,
         }
         workflow_file.write_text(json.dumps(valid_workflow))
 
@@ -280,14 +272,14 @@ class TestUserStory3Integration:
             "nodes": {
                 "1": {
                     "class_type": "LoadImage",
-                    "inputs": {"image": "example.jpg", "upload": "image"}
+                    "inputs": {"image": "example.jpg", "upload": "image"},
                 }
             },
             "links": [],
             "groups": [],
             "config": {},
             "extra": {},
-            "version": 0.4
+            "version": 0.4,
         }
         workflow_file.write_text(json.dumps(workflow))
 
@@ -304,10 +296,10 @@ class TestUserStory3Integration:
 
         # Step 5: Convert to dictionary
         settings_dict = settings.to_dict()
-        assert 'output_folder' in settings_dict
-        assert 'comfyui_endpoint' in settings_dict
-        assert 'workflow_json_path' in settings_dict
-        assert 'api_timeout' in settings_dict
+        assert "output_folder" in settings_dict
+        assert "comfyui_endpoint" in settings_dict
+        assert "workflow_json_path" in settings_dict
+        assert "api_timeout" in settings_dict
 
         # Step 6: Save to file
         settings_file = tmp_path / "settings.json"
