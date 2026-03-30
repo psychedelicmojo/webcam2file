@@ -1,0 +1,6 @@
+{
+  "output_folder": "C:/Users/datom/Software Development/webcam2file/captures",
+  "comfyui_endpoint": "http://127.0.0.1:8000",
+  "workflow_json_path": "C:/Users/datom/Software Development/webcam2file/workflows/flux_kontext_dev_basic_api.json",
+  "api_timeout": 300
+}
