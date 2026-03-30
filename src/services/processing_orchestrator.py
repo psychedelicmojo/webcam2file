@@ -328,56 +328,66 @@ class ProcessingOrchestrator:
     def _update_workflow_with_image(
         self, workflow_json: Dict[str, Any], uploaded_filename: str
     ) -> Dict[str, Any]:
-        """Dynamically update the workflow JSON with the uploaded image filename.
+        """Dynamically update the workflow JSON with the uploaded image filename and randomize the seed.
 
         This method traverses the workflow nodes to find LoadImage nodes and updates
-        their inputs.image value with the uploaded filename.
+        their inputs.image value with the uploaded filename. It also locates KSampler nodes
+        and assigns a random seed to prevent caching issues.
+
+        The workflow JSON is expected to be in ComfyUI's standard format where root-level
+        keys are node IDs (e.g., "136", "190") and values are node data dictionaries
+        containing "class_type" and "inputs".
 
         Args:
             workflow_json: The original workflow JSON.
             uploaded_filename: The filename returned by the upload endpoint.
 
         Returns:
-            Dict[str, Any]: A new workflow JSON with updated image references.
+            Dict[str, Any]: A new workflow JSON with updated image references and randomized seed.
 
         Raises:
             APIError: If no LoadImage node is found in the workflow.
         """
         import copy
+        import random
 
-        # Create a deep copy to avoid modifying the original
+        # Create a deep copy to avoid modifying the original workflow
         updated_workflow = copy.deepcopy(workflow_json)
 
-        # Check if nodes is a dict (ComfyUI format) or list
-        nodes = updated_workflow.get("nodes", [])
+        # ComfyUI API format: root-level keys are node IDs (strings)
+        # Iterate directly over the root-level dictionary items
+        load_image_found = False
+        for node_id, node_data in updated_workflow.items():
+            if not isinstance(node_data, dict):
+                continue
 
-        if isinstance(nodes, dict):
-            # ComfyUI format: nodes is a dict with node_id as key
-            for node_id, node_data in nodes.items():
-                if isinstance(node_data, dict) and node_data.get("class_type") == "LoadImage":
-                    # Found a LoadImage node, update its inputs.image
-                    inputs = node_data.get("inputs", {})
-                    if isinstance(inputs, dict):
-                        inputs["image"] = uploaded_filename
-                        node_data["inputs"] = inputs
-                        logger.debug(f"Updated LoadImage node {node_id} with image: {uploaded_filename}")
-                        return updated_workflow
-        elif isinstance(nodes, list):
-            # Alternative format: nodes is a list
-            for node_data in nodes:
-                if isinstance(node_data, dict) and node_data.get("class_type") == "LoadImage":
-                    # Found a LoadImage node, update its inputs.image
-                    inputs = node_data.get("inputs", {})
-                    if isinstance(inputs, dict):
-                        inputs["image"] = uploaded_filename
-                        node_data["inputs"] = inputs
-                        logger.debug(f"Updated LoadImage node with image: {uploaded_filename}")
-                        return updated_workflow
+            class_type = node_data.get("class_type")
+            if class_type == "LoadImage":
+                # Found a LoadImage node, update its inputs.image
+                inputs = node_data.get("inputs", {})
+                if isinstance(inputs, dict):
+                    inputs["image"] = uploaded_filename
+                    node_data["inputs"] = inputs
+                    logger.debug(f"Updated LoadImage node {node_id} with image: {uploaded_filename}")
+                    load_image_found = True
 
-        raise APIError(
-            "Workflow does not contain a LoadImage node. "
-            "Please ensure your ComfyUI workflow includes a LoadImage node."
-        )
+            elif class_type == "KSampler":
+                # Found a KSampler node, randomize its seed to prevent caching
+                inputs = node_data.get("inputs", {})
+                if isinstance(inputs, dict):
+                    # Generate a random 64-bit integer for the seed
+                    random_seed = random.randint(0, 2**64 - 1)
+                    inputs["seed"] = random_seed
+                    node_data["inputs"] = inputs
+                    logger.debug(f"Randomized KSampler node {node_id} seed to: {random_seed}")
+
+        if not load_image_found:
+            raise APIError(
+                "Workflow does not contain a LoadImage node. "
+                "Please ensure your ComfyUI workflow includes a LoadImage node."
+            )
+
+        return updated_workflow
 
     def _handle_processing_error(self, filepath: str, error_message: str) -> None:
         """Handle a processing error.
