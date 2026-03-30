@@ -107,7 +107,9 @@ class ComfyUIService(IComfyUIService):
             prompt_id: The prompt ID returned from trigger_workflow().
 
         Returns:
-            Dict[str, Any]: Workflow status information.
+            Dict[str, Any]: Workflow status information. Returns a dict with
+                "completed": True if the prompt is found in history (workflow done),
+                "completed": False if the prompt is not in history (still pending).
 
         Raises:
             APIConnectionError: If connection to ComfyUI fails.
@@ -127,10 +129,15 @@ class ComfyUIService(IComfyUIService):
             result = response.json()
 
             if prompt_id in result:
-                return result[prompt_id]
+                # Prompt found in history - workflow is complete
+                return {
+                    "prompt_id": prompt_id,
+                    "completed": True,
+                    "history": result[prompt_id],
+                }
 
-            # Return empty status if not found
-            return {"prompt_id": prompt_id, "status": "pending", "progress": None}
+            # Prompt not found in history - still pending
+            return {"prompt_id": prompt_id, "completed": False}
 
         except requests.exceptions.ConnectionError as e:
             raise APIConnectionError(
@@ -234,7 +241,8 @@ class ComfyUIService(IComfyUIService):
             check_interval: Time between status checks in seconds (default: 1.0).
 
         Returns:
-            Dict[str, Any]: Final workflow status information.
+            Dict[str, Any]: Final workflow status information containing the
+                history object under the "history" key.
 
         Raises:
             TimeoutError: If workflow doesn't complete within timeout.
@@ -245,15 +253,9 @@ class ComfyUIService(IComfyUIService):
         while time.time() - start_time < max_timeout:
             status = self.check_status(prompt_id)
 
-            # Check if workflow is complete
-            if status.get("status") == "completed":
+            # Check if workflow is complete (prompt found in history)
+            if status.get("completed"):
                 return status
-
-            # Check for error
-            if status.get("status") == "error":
-                raise APIError(
-                    f"Workflow failed: {status.get('error', 'Unknown error')}"
-                )
 
             # Wait before next check
             time.sleep(check_interval)

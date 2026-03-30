@@ -39,16 +39,25 @@ class ComfyUIWorkflow:
         return True
 
     def _validate_workflow_json(self) -> None:
-        """Validate workflow_json has valid ComfyUI structure."""
+        """Validate workflow_json has valid ComfyUI structure.
+
+        ComfyUI API workflows are flat dictionaries where root-level keys are
+        node IDs (e.g., "136", "190") and values are node data dictionaries
+        containing "class_type" and "inputs".
+        """
         if not isinstance(self.workflow_json, dict):
             raise ValueError("workflow_json must be a dictionary")
 
-        # Basic validation: check for required ComfyUI workflow keys
-        if "nodes" not in self.workflow_json:
-            raise ValueError("workflow_json must contain 'nodes' key")
+        if not self.workflow_json:
+            raise ValueError("workflow_json must not be empty")
 
-        if not isinstance(self.workflow_json["nodes"], (list, dict)):
-            raise ValueError("workflow_json['nodes'] must be a list or dictionary")
+        # Validate that all values are dictionaries (node definitions)
+        for key, value in self.workflow_json.items():
+            if not isinstance(value, dict):
+                raise ValueError(
+                    f"workflow_json values must be dictionaries (node definitions), "
+                    f"but key '{key}' has value of type '{type(value).__name__}'"
+                )
 
     def _validate_input_image_path(self) -> None:
         """Validate input_image_path points to an existing file."""
