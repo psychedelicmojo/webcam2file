@@ -8,6 +8,7 @@ from src.services.file_monitor_impl import FileMonitorServiceImpl
 from src.services.comfyui_service_impl import ComfyUIService
 from src.services.processing_orchestrator import ProcessingOrchestrator
 from src.models.application_settings import ApplicationSettings
+from src.services.settings_service import SettingsService
 
 
 def list_webcams():
@@ -20,6 +21,48 @@ def list_webcams():
     for index, name in webcams:
         print(f"  [{index}] {name}")
     return webcams
+
+
+def load_and_validate_settings():
+    """Load and validate settings from settings.json.
+    
+    Returns:
+        ApplicationSettings if valid, None if settings are invalid or missing
+    """
+    settings_service = SettingsService()
+    
+    try:
+        # Load settings from file
+        settings = settings_service.load_settings()
+        print(f"Loaded settings from settings.json")
+        
+        # Validate output folder exists and is writable
+        if not settings_service.ensure_output_folder_exists(settings):
+            print(f"Warning: Output folder is not accessible: {settings.output_folder}")
+            return None
+        
+        # Test ComfyUI connection if enabled
+        if settings.is_comfyui_enabled():
+            result = settings_service.test_connection(settings)
+            if result.get("success") != "true":
+                print(f"Warning: ComfyUI connection test failed: {result.get('message')}")
+                print("ComfyUI will be disabled. Images will be captured but not processed.")
+                # Return settings but with ComfyUI disabled
+                settings.enable_comfyui = False
+                return settings
+            print(f"ComfyUI connection test passed: {result.get('message')}")
+        
+        return settings
+        
+    except FileNotFoundError as e:
+        print(f"Warning: Settings file not found: {e}")
+        return None
+    except ValueError as e:
+        print(f"Warning: Invalid settings: {e}")
+        return None
+    except Exception as e:
+        print(f"Warning: Error loading settings: {e}")
+        return None
 
 
 def main():
@@ -40,15 +83,19 @@ def main():
             print("  python main.py --list       # List available webcams")
             return
 
-    # Initialize settings - ComfyUI is optional
-    # Set enable_comfyui=False to use webcam capture without ComfyUI
-    settings = ApplicationSettings(
-        output_folder="captures",
-        comfyui_endpoint="http://127.0.0.1:8000",
-        workflow_json_path="workflows/flux_kontext_dev_basic_api.json",
-        api_timeout=90,
-        enable_comfyui=True  # Set to True to enable ComfyUI processing
-    )
+    # Load and validate settings from settings.json
+    settings = load_and_validate_settings()
+    
+    # Fallback to defaults if settings are invalid or missing
+    if settings is None:
+        print("Using default settings (ComfyUI disabled)...")
+        settings = ApplicationSettings(
+            output_folder="captures",
+            comfyui_endpoint="http://127.0.0.1:8188",
+            workflow_json_path="workflow.json",
+            api_timeout=30,
+            enable_comfyui=False  # Disable ComfyUI if settings are invalid
+        )
     
     # Initialize services
     webcam_service = WebcamServiceImpl(webcam_index=0)  # Change index to select different webcam
@@ -69,6 +116,7 @@ def main():
         try:
             comfyui_service = ComfyUIService(endpoint=settings.comfyui_endpoint)
             orchestrator = ProcessingOrchestrator(settings, visual_feedback)
+            print("ComfyUI integration enabled")
         except Exception as e:
             print(f"Warning: Could not initialize ComfyUI: {e}")
             print("Running in webcam capture mode only.")
