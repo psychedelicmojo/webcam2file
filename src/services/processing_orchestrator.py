@@ -5,11 +5,10 @@ import logging
 import threading
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from src.lib.error_manager import ErrorManager
 from src.models.application_settings import ApplicationSettings
-from src.models.comfyui_workflow import ComfyUIWorkflow
 from src.models.image_capture import ImageCapture
 from src.models.processing_status import ProcessingStatus
 from src.services.capture_queue import ProcessingState
@@ -262,17 +261,27 @@ class ProcessingOrchestrator:
             logger.error(f"Workflow loading error for {filepath}: {error_msg}")
             raise APIError(error_msg) from e
 
-        # Create ComfyUI workflow
-        ComfyUIWorkflow(
-            workflow_json=workflow_json,
-            input_image_path=filepath,
-            output_location=self._settings.output_folder,
-        )
+        # Upload image to ComfyUI
+        try:
+            uploaded_filename = self._comfyui_service.upload_image(filepath)
+            logger.info(f"Image uploaded to ComfyUI as: {uploaded_filename}")
+        except (APIConnectionError, APIError, TimeoutError) as e:
+            logger.error(f"Failed to upload image for {filepath}: {e}")
+            raise
+
+        # Dynamically update workflow JSON with uploaded filename
+        try:
+            updated_workflow = self._update_workflow_with_image(
+                workflow_json, uploaded_filename
+            )
+        except APIError as e:
+            logger.error(f"Failed to update workflow for {filepath}: {e}")
+            raise
 
         # Trigger workflow
         try:
             prompt_id = self._comfyui_service.trigger_workflow(
-                workflow_json=workflow_json, input_image_path=filepath
+                workflow_json=updated_workflow, input_image_path=filepath
             )
             logger.info(f"Workflow triggered for {filepath}, prompt_id: {prompt_id}")
         except (APIConnectionError, APIError, TimeoutError) as e:
@@ -285,6 +294,16 @@ class ProcessingOrchestrator:
             logger.info(f"Workflow completed for {filepath}")
         except (APIConnectionError, APIError, TimeoutError) as e:
             logger.error(f"Failed to wait for workflow completion for {filepath}: {e}")
+            raise
+
+        # Download output images
+        try:
+            downloaded_files = self._comfyui_service.download_outputs(
+                prompt_id, self._settings.output_folder
+            )
+            logger.info(f"Downloaded {len(downloaded_files)} output image(s)")
+        except (APIConnectionError, APIError, TimeoutError) as e:
+            logger.error(f"Failed to download outputs for {filepath}: {e}")
             raise
 
         # Update status to completed
@@ -305,6 +324,60 @@ class ProcessingOrchestrator:
 
         self._visual_feedback.show_completion_feedback()
         logger.info(f"Processing completed successfully: {filepath}")
+
+    def _update_workflow_with_image(
+        self, workflow_json: Dict[str, Any], uploaded_filename: str
+    ) -> Dict[str, Any]:
+        """Dynamically update the workflow JSON with the uploaded image filename.
+
+        This method traverses the workflow nodes to find LoadImage nodes and updates
+        their inputs.image value with the uploaded filename.
+
+        Args:
+            workflow_json: The original workflow JSON.
+            uploaded_filename: The filename returned by the upload endpoint.
+
+        Returns:
+            Dict[str, Any]: A new workflow JSON with updated image references.
+
+        Raises:
+            APIError: If no LoadImage node is found in the workflow.
+        """
+        import copy
+
+        # Create a deep copy to avoid modifying the original
+        updated_workflow = copy.deepcopy(workflow_json)
+
+        # Check if nodes is a dict (ComfyUI format) or list
+        nodes = updated_workflow.get("nodes", [])
+
+        if isinstance(nodes, dict):
+            # ComfyUI format: nodes is a dict with node_id as key
+            for node_id, node_data in nodes.items():
+                if isinstance(node_data, dict) and node_data.get("class_type") == "LoadImage":
+                    # Found a LoadImage node, update its inputs.image
+                    inputs = node_data.get("inputs", {})
+                    if isinstance(inputs, dict):
+                        inputs["image"] = uploaded_filename
+                        node_data["inputs"] = inputs
+                        logger.debug(f"Updated LoadImage node {node_id} with image: {uploaded_filename}")
+                        return updated_workflow
+        elif isinstance(nodes, list):
+            # Alternative format: nodes is a list
+            for node_data in nodes:
+                if isinstance(node_data, dict) and node_data.get("class_type") == "LoadImage":
+                    # Found a LoadImage node, update its inputs.image
+                    inputs = node_data.get("inputs", {})
+                    if isinstance(inputs, dict):
+                        inputs["image"] = uploaded_filename
+                        node_data["inputs"] = inputs
+                        logger.debug(f"Updated LoadImage node with image: {uploaded_filename}")
+                        return updated_workflow
+
+        raise APIError(
+            "Workflow does not contain a LoadImage node. "
+            "Please ensure your ComfyUI workflow includes a LoadImage node."
+        )
 
     def _handle_processing_error(self, filepath: str, error_message: str) -> None:
         """Handle a processing error.

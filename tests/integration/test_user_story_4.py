@@ -4,8 +4,10 @@ These tests verify that the application handles various error conditions
 gracefully with user-friendly messages and appropriate recovery actions.
 """
 
+import os
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -146,6 +148,30 @@ class MockComfyUIService(IComfyUIService):
     def set_raise_timeout_error(self, raise_error: bool) -> None:
         """Set whether to raise timeout error for testing."""
         self._raise_timeout_error = raise_error
+
+    def upload_image(self, image_path: str) -> str:
+        """Upload an image to ComfyUI."""
+        if self._raise_connection_error:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        return os.path.basename(image_path)
+
+    def wait_for_completion(
+        self, prompt_id: str, timeout: Optional[int] = None, check_interval: float = 1.0
+    ) -> dict:
+        """Wait for a workflow to complete."""
+        if self._raise_connection_error:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        if self._raise_timeout_error:
+            raise TimeoutError("Request timed out")
+        return {"prompt_id": prompt_id, "status": "completed"}
+
+    def download_outputs(
+        self, prompt_id: str, output_folder: str
+    ) -> list:
+        """Download processed images from ComfyUI."""
+        if self._raise_connection_error:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        return []
 
 
 class MockCaptureQueue(ICaptureQueue):

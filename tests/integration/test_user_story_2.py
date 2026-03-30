@@ -4,6 +4,7 @@ These tests verify the complete end-to-end workflow of monitoring a folder
 for new images and triggering ComfyUI processing.
 """
 
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -110,6 +111,28 @@ class MockComfyUIService(IComfyUIService):
     def get_triggered_workflows(self) -> list:
         """Get list of triggered workflows."""
         return self._triggered_workflows
+
+    def upload_image(self, image_path: str) -> str:
+        """Upload an image to ComfyUI."""
+        if not self._available:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        return os.path.basename(image_path)
+
+    def wait_for_completion(
+        self, prompt_id: str, timeout: Optional[int] = None, check_interval: float = 1.0
+    ) -> dict:
+        """Wait for a workflow to complete."""
+        if not self._available:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        return {"prompt_id": prompt_id, "status": "completed"}
+
+    def download_outputs(
+        self, prompt_id: str, output_folder: str
+    ) -> list:
+        """Download processed images from ComfyUI."""
+        if not self._available:
+            raise APIConnectionError("Cannot connect to ComfyUI")
+        return []
 
 
 class MockCaptureQueue(ICaptureQueue):
