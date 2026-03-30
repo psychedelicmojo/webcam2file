@@ -127,8 +127,8 @@ class MainWindow:
         self._running = False
         self._video_feed_after_id: Optional[str] = None
 
-        # Bind space bar for capture
-        self._root.bind("<space>", self._on_space_bar)
+        # Bind space bar for capture (prevent default button behavior)
+        self._root.bind("<space>", lambda e: (self._on_space_bar(e), "break"))
 
         # Handle window close
         self._root.protocol("WM_DELETE_WINDOW", self._on_quit)
