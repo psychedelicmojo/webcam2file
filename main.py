@@ -44,10 +44,10 @@ def main():
     # Set enable_comfyui=False to use webcam capture without ComfyUI
     settings = ApplicationSettings(
         output_folder="captures",
-        comfyui_endpoint="http://127.0.0.1:8188",
-        workflow_json_path="workflow.json",
+        comfyui_endpoint="http://127.0.0.1:8000",
+        workflow_json_path="workflows/flux_kontext_dev_basic_api.json",
         api_timeout=30,
-        enable_comfyui=False  # Set to True to enable ComfyUI processing
+        enable_comfyui=True  # Set to True to enable ComfyUI processing
     )
     
     # Initialize services

@@ -145,3 +145,9 @@ dmypy.json
 .vscode/
 *.swp
 *.swo
+
+# Generated content
+workflows/
+output/
+captures/
+
