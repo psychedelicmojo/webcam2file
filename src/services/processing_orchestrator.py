@@ -485,3 +485,25 @@ class ProcessingOrchestrator:
             callback: Function to call when processing fails.
         """
         self._on_processing_error = callback
+
+    def update_settings(self, settings: ApplicationSettings) -> None:
+        """Update orchestrator settings at runtime.
+
+        Args:
+            settings: New ApplicationSettings instance
+        """
+        logger.debug(f"Updating orchestrator settings: {settings.to_dict()}")
+        self._settings = settings
+
+        # Update ComfyUI service endpoint and timeout
+        self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip("/")
+        self._comfyui_service._timeout = settings.api_timeout
+
+        # Update file monitor folder if monitoring
+        if self._monitoring:
+            self._file_monitor.stop_monitoring()
+            self._file_monitor.start_monitoring(
+                folder_path=settings.output_folder,
+                on_file_created=self._on_file_created,
+            )
+            logger.info(f"File monitor updated to watch: {settings.output_folder}")
