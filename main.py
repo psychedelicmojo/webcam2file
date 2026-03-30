@@ -46,7 +46,7 @@ def main():
         output_folder="captures",
         comfyui_endpoint="http://127.0.0.1:8000",
         workflow_json_path="workflows/flux_kontext_dev_basic_api.json",
-        api_timeout=30,
+        api_timeout=90,
         enable_comfyui=True  # Set to True to enable ComfyUI processing
     )
     
