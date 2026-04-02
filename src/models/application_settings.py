@@ -40,7 +40,7 @@ class ApplicationSettings:
     Attributes:
         output_folder: Directory where captured images are saved
         comfyui_endpoint: ComfyUI API endpoint URL (optional, set to None to disable ComfyUI)
-        workflow_configs: List of 8 workflow configurations (name + path pairs)
+        workflow_configs: List of 10 workflow configurations (name + path pairs)
         art_styles: List of 5 art style configurations (name + path pairs)
         api_timeout: Timeout in seconds for API requests (default: 30)
         enable_comfyui: Whether ComfyUI integration is enabled (default: True)
@@ -50,7 +50,7 @@ class ApplicationSettings:
     output_folder: str
     comfyui_endpoint: str
     workflow_configs: list[WorkflowConfig] = field(
-        default_factory=lambda: [WorkflowConfig(name="", path="") for _ in range(8)]
+        default_factory=lambda: [WorkflowConfig(name="", path="") for _ in range(10)]
     )
     art_styles: list[ArtStyleConfig] = field(
         default_factory=lambda: [
@@ -69,9 +69,9 @@ class ApplicationSettings:
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
-        # Ensure workflow_configs has exactly 8 entries
-        if len(self.workflow_configs) < 8:
-            while len(self.workflow_configs) < 8:
+        # Ensure workflow_configs has exactly 10 entries
+        if len(self.workflow_configs) < 10:
+            while len(self.workflow_configs) < 10:
                 self.workflow_configs.append(WorkflowConfig(name="", path=""))
         # Ensure art_styles has exactly 5 entries
         if len(self.art_styles) < 5:
@@ -228,8 +228,8 @@ class ApplicationSettings:
             workflow_configs_data = [{"name": "Workflow 1", "path": data["workflow_json_path"]}]
         else:
             workflow_configs_data = data.get("workflow_configs", [])
-        # Pad to exactly 8 slots (handles older settings files with fewer entries)
-        while len(workflow_configs_data) < 8:
+        # Pad to exactly 10 slots (handles older settings files with fewer entries)
+        while len(workflow_configs_data) < 10:
             workflow_configs_data.append({"name": "", "path": ""})
         workflow_configs = [
             WorkflowConfig(name=c["name"], path=c["path"])

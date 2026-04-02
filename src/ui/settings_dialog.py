@@ -40,7 +40,7 @@ class SettingsDialog:
         # Create dialog window
         self._dialog = tk.Toplevel(parent)
         self._dialog.title("Settings")
-        self._dialog.geometry("700x1300")
+        self._dialog.geometry("700x1500")
         self._dialog.resizable(False, False)
 
         # Center dialog on parent
@@ -105,7 +105,7 @@ class SettingsDialog:
 
         # Workflow JSON path sections (4 configurations)
         workflow_start_row = 2
-        for i in range(8):
+        for i in range(10):
             ttk.Label(main_frame, text=f"Workflow {i + 1} Name:").grid(
                 row=workflow_start_row + i * 2, column=0, sticky="w", pady=2
             )
@@ -140,58 +140,58 @@ class SettingsDialog:
 
         # Email address section (placed after workflow selection)
         ttk.Label(main_frame, text="Email Address:").grid(
-            row=18, column=0, sticky="w", pady=5
+            row=22, column=0, sticky="w", pady=5
         )
         self._email_address_entry = ttk.Entry(
             main_frame, textvariable=self._email_address_var, width=50
         )
-        self._email_address_entry.grid(row=18, column=1, sticky="ew", pady=5, padx=5)
+        self._email_address_entry.grid(row=22, column=1, sticky="ew", pady=5, padx=5)
 
         # Apps Script URL section
         ttk.Label(main_frame, text="Apps Script URL:").grid(
-            row=19, column=0, sticky="w", pady=5
+            row=23, column=0, sticky="w", pady=5
         )
         self._apps_script_url_var = tk.StringVar()
         self._apps_script_url_entry = ttk.Entry(
             main_frame, textvariable=self._apps_script_url_var, width=50
         )
-        self._apps_script_url_entry.grid(row=19, column=1, sticky="ew", pady=5, padx=5)
+        self._apps_script_url_entry.grid(row=23, column=1, sticky="ew", pady=5, padx=5)
         ttk.Label(
             main_frame,
             text="Google Apps Script web app URL for email sending",
             foreground="gray",
-        ).grid(row=19, column=2, sticky="w", padx=5)
+        ).grid(row=23, column=2, sticky="w", padx=5)
 
         # API timeout section
         ttk.Label(main_frame, text="API Timeout (seconds):").grid(
-            row=20, column=0, sticky="w", pady=5
+            row=24, column=0, sticky="w", pady=5
         )
         self._api_timeout_var = tk.StringVar(value="30")
         self._api_timeout_entry = ttk.Entry(
             main_frame, textvariable=self._api_timeout_var, width=10
         )
-        self._api_timeout_entry.grid(row=20, column=1, sticky="w", pady=5, padx=5)
+        self._api_timeout_entry.grid(row=24, column=1, sticky="w", pady=5, padx=5)
 
         # Countdown seconds section
         ttk.Label(main_frame, text="Capture Countdown (seconds):").grid(
-            row=21, column=0, sticky="w", pady=5
+            row=25, column=0, sticky="w", pady=5
         )
         self._countdown_var = tk.StringVar(value="3")
         self._countdown_entry = ttk.Entry(
             main_frame, textvariable=self._countdown_var, width=10
         )
-        self._countdown_entry.grid(row=21, column=1, sticky="w", pady=5, padx=5)
+        self._countdown_entry.grid(row=25, column=1, sticky="w", pady=5, padx=5)
         ttk.Label(
             main_frame, text="0 = capture immediately", foreground="gray"
-        ).grid(row=21, column=2, sticky="w", padx=5)
+        ).grid(row=25, column=2, sticky="w", padx=5)
 
         # Status label
         self._status_label = ttk.Label(main_frame, text="", foreground="blue")
-        self._status_label.grid(row=22, column=0, columnspan=3, pady=10)
+        self._status_label.grid(row=26, column=0, columnspan=3, pady=10)
 
         # Buttons frame
         buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.grid(row=23, column=0, columnspan=3, pady=10)
+        buttons_frame.grid(row=27, column=0, columnspan=3, pady=10)
 
         # Save button
         self._save_button = ttk.Button(
@@ -229,7 +229,7 @@ class SettingsDialog:
                     defaults.get("comfyui_endpoint", "http://127.0.0.1:8188")
                 )
                 # Set default workflow configs
-                for i in range(8):
+                for i in range(10):
                     if i < len(self._workflow_path_vars):
                         self._workflow_path_vars[i].set(
                             defaults.get(f"workflow_{i}_path", "")
@@ -249,7 +249,7 @@ class SettingsDialog:
                 defaults.get("comfyui_endpoint", "http://127.0.0.1:8188")
             )
             # Set default workflow configs
-            for i in range(8):
+            for i in range(10):
                 if i < len(self._workflow_path_vars):
                     self._workflow_path_vars[i].set(
                         defaults.get(f"workflow_{i}_path", "")
@@ -370,7 +370,7 @@ class SettingsDialog:
         try:
             # Collect workflow configs
             workflow_configs = []
-            for i in range(8):
+            for i in range(10):
                 name = self._workflow_name_vars[i].get().strip()
                 path = self._workflow_path_vars[i].get().strip()
                 if path:  # Only add if path is provided

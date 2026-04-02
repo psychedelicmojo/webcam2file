@@ -33,6 +33,14 @@
     {
       "name": "Stop-motion clay figure",
       "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Stop-motion_clay_figure_flux_kontext_dev.json"
+    },
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
     }
   ],
   "api_timeout": 60,
