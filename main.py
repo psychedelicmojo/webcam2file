@@ -146,6 +146,7 @@ def main():
         orchestrator=orchestrator,
         email_service=email_service,
         initial_email=settings.email_address,
+        initial_countdown=settings.countdown_seconds,
     )
 
     # Start the application (video feed and event loop)

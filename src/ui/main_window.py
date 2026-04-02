@@ -41,6 +41,7 @@ class MainWindow:
         orchestrator: Optional[ProcessingOrchestrator] = None,
         email_service: Optional[IEmailService] = None,
         initial_email: str = "",
+        initial_countdown: int = 3,
     ):
         """Initialize the main window.
 
@@ -67,6 +68,10 @@ class MainWindow:
         self._preview_index: int = 0
         self._current_preview_photo = None
 
+        # Countdown state
+        self._countdown_seconds: int = initial_countdown
+        self._countdown_active: bool = False
+
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
         self._root.geometry("1280x720")
@@ -91,9 +96,22 @@ class MainWindow:
         self._video_frame.columnconfigure(0, weight=1)
         self._video_frame.rowconfigure(0, weight=1)
 
-        # Video label for displaying frames
-        self._video_label = ttk.Label(self._video_frame)
+        # Video label for displaying frames — anchor="center" keeps the image
+        # centred when the label is larger than the scaled frame.
+        self._video_label = ttk.Label(self._video_frame, anchor="center")
         self._video_label.grid(row=0, column=0, sticky="nsew")
+
+        # Countdown overlay — placed over the video feed via place(), shown only
+        # while a countdown is active.
+        self._countdown_overlay = tk.Label(
+            self._video_frame,
+            text="",
+            font=("Segoe UI", 96, "bold"),
+            foreground="white",
+            background="#1a1a1a",
+            padx=30,
+            pady=15,
+        )
 
         # Placeholder for the current photo image (created later when window is visible)
         self._current_photo = None
@@ -247,12 +265,46 @@ class MainWindow:
         self._on_capture()
 
     def _on_capture(self) -> None:
-        """Handle capture button press."""
+        """Handle capture button / space bar press — starts countdown or captures immediately."""
+        if self._countdown_active:
+            return  # ignore repeated presses during an active countdown
+
+        if self._countdown_seconds > 0:
+            self._start_countdown()
+        else:
+            self._do_capture()
+
+    def _start_countdown(self) -> None:
+        """Begin the countdown sequence before capturing."""
+        self._countdown_active = True
+        self._capture_button.config(state=tk.DISABLED)
+        self._status_label.config(text="Status: Get ready...", foreground="orange")
+        self._tick_countdown(self._countdown_seconds)
+
+    def _tick_countdown(self, remaining: int) -> None:
+        """Decrement the countdown overlay by one second."""
+        if not self._running:
+            self._countdown_overlay.place_forget()
+            self._countdown_active = False
+            self._capture_button.config(state=tk.NORMAL)
+            return
+
+        if remaining > 0:
+            self._countdown_overlay.config(text=str(remaining))
+            self._countdown_overlay.place(relx=0.5, rely=0.5, anchor="center")
+            self._countdown_overlay.lift()
+            self._root.after(1000, lambda: self._tick_countdown(remaining - 1))
+        else:
+            self._countdown_overlay.place_forget()
+            self._countdown_active = False
+            self._do_capture()
+
+    def _do_capture(self) -> None:
+        """Execute the actual webcam capture."""
         try:
             self._status_label.config(text="Status: Capturing...", foreground="orange")
             self._capture_button.config(state=tk.DISABLED)
 
-            # Capture and save image
             image_capture = self._capture_service.capture()
 
             self._status_label.config(
@@ -391,6 +443,10 @@ class MainWindow:
             self._email_service.set_url(settings.apps_script_url)
         if hasattr(settings, "email_address") and settings.email_address:
             self._email_var.set(settings.email_address)
+
+        # Update countdown
+        if hasattr(settings, "countdown_seconds"):
+            self._countdown_seconds = settings.countdown_seconds
 
         # Update status label
         self._status_label.config(

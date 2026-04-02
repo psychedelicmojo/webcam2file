@@ -172,13 +172,26 @@ class SettingsDialog:
         )
         self._api_timeout_entry.grid(row=12, column=1, sticky="w", pady=5, padx=5)
 
+        # Countdown seconds section
+        ttk.Label(main_frame, text="Capture Countdown (seconds):").grid(
+            row=13, column=0, sticky="w", pady=5
+        )
+        self._countdown_var = tk.StringVar(value="3")
+        self._countdown_entry = ttk.Entry(
+            main_frame, textvariable=self._countdown_var, width=10
+        )
+        self._countdown_entry.grid(row=13, column=1, sticky="w", pady=5, padx=5)
+        ttk.Label(
+            main_frame, text="0 = capture immediately", foreground="gray"
+        ).grid(row=13, column=2, sticky="w", padx=5)
+
         # Status label
         self._status_label = ttk.Label(main_frame, text="", foreground="blue")
-        self._status_label.grid(row=13, column=0, columnspan=3, pady=10)
+        self._status_label.grid(row=14, column=0, columnspan=3, pady=10)
 
         # Buttons frame
         buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.grid(row=14, column=0, columnspan=3, pady=10)
+        buttons_frame.grid(row=15, column=0, columnspan=3, pady=10)
 
         # Save button
         self._save_button = ttk.Button(
@@ -207,6 +220,7 @@ class SettingsDialog:
                 self._email_address_var.set(settings.email_address)
                 self._apps_script_url_var.set(settings.apps_script_url)
                 self._api_timeout_var.set(str(settings.api_timeout))
+                self._countdown_var.set(str(settings.countdown_seconds))
             else:
                 # Use defaults if settings not loaded
                 defaults = self._settings_service.get_default_settings()
@@ -226,6 +240,7 @@ class SettingsDialog:
                 self._email_address_var.set(defaults.get("email_address", ""))
                 self._apps_script_url_var.set(defaults.get("apps_script_url", ""))
                 self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
+                self._countdown_var.set(str(defaults.get("countdown_seconds", 3)))
         except Exception:
             # Use defaults if settings not loaded
             defaults = self._settings_service.get_default_settings()
@@ -245,6 +260,7 @@ class SettingsDialog:
             self._email_address_var.set(defaults.get("email_address", ""))
             self._apps_script_url_var.set(defaults.get("apps_script_url", ""))
             self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
+            self._countdown_var.set(str(defaults.get("countdown_seconds", 3)))
 
     def _browse_output_folder(self) -> None:
         """Open folder dialog to select output folder."""
@@ -335,6 +351,15 @@ class SettingsDialog:
             messagebox.showerror("Error", "API timeout must be a positive integer")
             return False
 
+        # Validate countdown seconds
+        try:
+            countdown = int(self._countdown_var.get().strip())
+            if countdown < 0:
+                raise ValueError("Countdown must be 0 or greater")
+        except ValueError:
+            messagebox.showerror("Error", "Countdown must be a non-negative integer")
+            return False
+
         return True
 
     def _on_save(self) -> None:
@@ -364,6 +389,7 @@ class SettingsDialog:
                 api_timeout=int(self._api_timeout_var.get().strip()),
                 email_address=self._email_address_var.get().strip(),
                 apps_script_url=self._apps_script_url_var.get().strip(),
+                countdown_seconds=int(self._countdown_var.get().strip()),
             )
 
             # Validate settings

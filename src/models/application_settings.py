@@ -70,6 +70,7 @@ class ApplicationSettings:
     enable_comfyui: bool = True
     email_address: str = ""
     apps_script_url: str = ""
+    countdown_seconds: int = 3
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
@@ -214,6 +215,7 @@ class ApplicationSettings:
             ],
             "email_address": self.email_address,
             "apps_script_url": self.apps_script_url,
+            "countdown_seconds": self.countdown_seconds,
         }
 
     @classmethod
@@ -275,6 +277,7 @@ class ApplicationSettings:
             art_styles=art_styles,
             email_address=data.get("email_address", ""),
             apps_script_url=data.get("apps_script_url", ""),
+            countdown_seconds=data.get("countdown_seconds", 3),
         )
 
     def save_to_file(self, filepath: str) -> None:
