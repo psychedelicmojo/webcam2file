@@ -17,6 +17,14 @@
     {
       "name": "Plush Doll",
       "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Plush_doll_flux_kontext_dev.json"
+    },
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
     }
   ],
   "api_timeout": 60,
@@ -43,5 +51,6 @@
     }
   ],
   "email_address": "",
-  "apps_script_url": ""
+  "apps_script_url": "https://script.google.com/macros/s/AKfycbxFzfpX8BD0bU0Qi1-wobIqnee5N564VNzw_53INDplpg_37ArWEijEMBKyOj4m7EQDtw/exec",
+  "countdown_seconds": 3
 }

@@ -40,7 +40,7 @@ class ApplicationSettings:
     Attributes:
         output_folder: Directory where captured images are saved
         comfyui_endpoint: ComfyUI API endpoint URL (optional, set to None to disable ComfyUI)
-        workflow_configs: List of 4 workflow configurations (name + path pairs)
+        workflow_configs: List of 6 workflow configurations (name + path pairs)
         art_styles: List of 5 art style configurations (name + path pairs)
         api_timeout: Timeout in seconds for API requests (default: 30)
         enable_comfyui: Whether ComfyUI integration is enabled (default: True)
@@ -51,6 +51,8 @@ class ApplicationSettings:
     comfyui_endpoint: str
     workflow_configs: list[WorkflowConfig] = field(
         default_factory=lambda: [
+            WorkflowConfig(name="", path=""),
+            WorkflowConfig(name="", path=""),
             WorkflowConfig(name="", path=""),
             WorkflowConfig(name="", path=""),
             WorkflowConfig(name="", path=""),
@@ -74,9 +76,9 @@ class ApplicationSettings:
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
-        # Ensure workflow_configs has exactly 4 entries
-        if len(self.workflow_configs) < 4:
-            while len(self.workflow_configs) < 4:
+        # Ensure workflow_configs has exactly 6 entries
+        if len(self.workflow_configs) < 6:
+            while len(self.workflow_configs) < 6:
                 self.workflow_configs.append(WorkflowConfig(name="", path=""))
         # Ensure art_styles has exactly 5 entries
         if len(self.art_styles) < 5:
@@ -235,6 +237,8 @@ class ApplicationSettings:
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
             ]
         else:
             workflow_configs_data = data.get(
@@ -244,10 +248,12 @@ class ApplicationSettings:
                     {"name": "", "path": ""},
                     {"name": "", "path": ""},
                     {"name": "", "path": ""},
+                    {"name": "", "path": ""},
+                    {"name": "", "path": ""},
                 ],
             )
-        # Ensure exactly 4 workflow configs
-        while len(workflow_configs_data) < 4:
+        # Ensure exactly 6 workflow configs (pad if loading an older settings file)
+        while len(workflow_configs_data) < 6:
             workflow_configs_data.append({"name": "", "path": ""})
         workflow_configs = [
             WorkflowConfig(name=c["name"], path=c["path"])

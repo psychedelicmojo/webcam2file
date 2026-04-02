@@ -31,6 +31,8 @@ class SettingsService:
             {"name": "", "path": ""},
             {"name": "", "path": ""},
             {"name": "", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
         ],
         "art_styles": [
             {"name": "", "path": ""},
