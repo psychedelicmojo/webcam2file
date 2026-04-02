@@ -1,14 +1,14 @@
 import sys
 
-from src.ui.main_window import MainWindow
-from src.services.webcam_impl import WebcamServiceImpl
-from src.services.capture_service import CaptureService
-from src.services.visual_feedback import VisualFeedback
-from src.services.file_monitor_impl import FileMonitorServiceImpl
-from src.services.comfyui_service_impl import ComfyUIService
-from src.services.processing_orchestrator import ProcessingOrchestrator
 from src.models.application_settings import ApplicationSettings
+from src.services.capture_service import CaptureService
+from src.services.comfyui_service_impl import ComfyUIService
+from src.services.file_monitor_impl import FileMonitorServiceImpl
+from src.services.processing_orchestrator import ProcessingOrchestrator
 from src.services.settings_service import SettingsService
+from src.services.visual_feedback import VisualFeedback
+from src.services.webcam_impl import WebcamServiceImpl
+from src.ui.main_window import MainWindow
 
 
 def list_webcams():
@@ -25,35 +25,39 @@ def list_webcams():
 
 def load_and_validate_settings():
     """Load and validate settings from settings.json.
-    
+
     Returns:
         ApplicationSettings if valid, None if settings are invalid or missing
     """
     settings_service = SettingsService()
-    
+
     try:
         # Load settings from file
         settings = settings_service.load_settings()
-        print(f"Loaded settings from settings.json")
-        
+        print("Loaded settings from settings.json")
+
         # Validate output folder exists and is writable
         if not settings_service.ensure_output_folder_exists(settings):
             print(f"Warning: Output folder is not accessible: {settings.output_folder}")
             return None
-        
+
         # Test ComfyUI connection if enabled
         if settings.is_comfyui_enabled():
             result = settings_service.test_connection(settings)
             if result.get("success") != "true":
-                print(f"Warning: ComfyUI connection test failed: {result.get('message')}")
-                print("ComfyUI will be disabled. Images will be captured but not processed.")
+                print(
+                    f"Warning: ComfyUI connection test failed: {result.get('message')}"
+                )
+                print(
+                    "ComfyUI will be disabled. Images will be captured but not processed."
+                )
                 # Return settings but with ComfyUI disabled
                 settings.enable_comfyui = False
                 return settings
             print(f"ComfyUI connection test passed: {result.get('message')}")
-        
+
         return settings
-        
+
     except FileNotFoundError as e:
         print(f"Warning: Settings file not found: {e}")
         return None
@@ -85,30 +89,34 @@ def main():
 
     # Load and validate settings from settings.json
     settings = load_and_validate_settings()
-    
+
     # Fallback to defaults if settings are invalid or missing
     if settings is None:
         print("Using default settings (ComfyUI disabled)...")
+        from src.models.application_settings import WorkflowConfig
+
         settings = ApplicationSettings(
             output_folder="captures",
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path="workflow.json",
+            workflow_configs=[WorkflowConfig(name="", path="") for _ in range(4)],
             api_timeout=30,
-            enable_comfyui=False  # Disable ComfyUI if settings are invalid
+            enable_comfyui=False,  # Disable ComfyUI if settings are invalid
         )
-    
+
     # Initialize services
-    webcam_service = WebcamServiceImpl(webcam_index=0)  # Change index to select different webcam
+    webcam_service = WebcamServiceImpl(
+        webcam_index=0
+    )  # Change index to select different webcam
     visual_feedback = VisualFeedback()
     file_monitor_service = FileMonitorServiceImpl()
-    
+
     # Create capture service (requires output folder)
     capture_service = CaptureService(
         webcam_service=webcam_service,
         visual_feedback=visual_feedback,
-        output_folder=settings.output_folder
+        output_folder=settings.output_folder,
     )
-    
+
     # Initialize ComfyUI service only if enabled
     comfyui_service = None
     orchestrator = None
@@ -120,7 +128,7 @@ def main():
         except Exception as e:
             print(f"Warning: Could not initialize ComfyUI: {e}")
             print("Running in webcam capture mode only.")
-    
+
     # Create and run main window
     # Use the existing root window (MainWindow creates its own, so we don't need this)
     app = MainWindow(
@@ -129,15 +137,16 @@ def main():
         visual_feedback=visual_feedback,
         file_monitor_service=file_monitor_service,
         comfyui_service=comfyui_service,
-        orchestrator=orchestrator
+        orchestrator=orchestrator,
     )
-    
+
     # Start the application (video feed and event loop)
     try:
         app.start()
     except Exception as e:
         print(f"Error starting application: {e}")
         import traceback
+
         traceback.print_exc()
 
 

@@ -123,55 +123,19 @@ The application can run in two modes:
 
 This mode allows you to capture images from your webcam without ComfyUI processing.
 
-1. **Create `main.py`** in the project root with the following content:
+1. **Run the application**:
+   ```powershell
+   python main.py
+   ```
 
-```python
-import tkinter as tk
-from src.ui.main_window import MainWindow
-from src.services.webcam_impl import WebcamServiceImpl
-from src.services.capture_service import CaptureService
-from src.services.visual_feedback import VisualFeedback
-from src.services.file_monitor_impl import FileMonitorServiceImpl
-from src.models.application_settings import ApplicationSettings
+2. **Capture an image**:
+   - Ensure the webcam feed is visible
+   - Press the **Space Bar** to capture the current frame
+   - Wait for visual feedback (subtle flash/border highlight)
 
-def main():
-    # Initialize settings - ComfyUI is optional
-    settings = ApplicationSettings(
-        output_folder="captures",
-        comfyui_endpoint="http://127.0.0.1:8188",
-        workflow_json_path="workflow.json",
-        api_timeout=30,
-        enable_comfyui=False  # Set to False for webcam capture only
-    )
-    
-    webcam_service = WebcamServiceImpl()
-    visual_feedback = VisualFeedback()
-    file_monitor_service = FileMonitorServiceImpl()
-    capture_service = CaptureService(
-        webcam_service=webcam_service,
-        visual_feedback=visual_feedback,
-        output_folder=settings.output_folder
-    )
-    
-    root = tk.Tk()
-    app = MainWindow(
-        webcam_service=webcam_service,
-        capture_service=capture_service,
-        visual_feedback=visual_feedback,
-        file_monitor_service=file_monitor_service,
-        comfyui_service=None,
-        orchestrator=None
-    )
-    root.mainloop()
-
-if __name__ == "__main__":
-    main()
-```
-
-2. **Run the application**:
-```powershell
-python main.py
-```
+3. **View captured images**:
+   - Open the configured output folder (default: `captures/`)
+   - Images are saved as JPEG files with timestamps
 
 #### Full Mode (With ComfyUI Processing)
 
@@ -179,7 +143,7 @@ To enable ComfyUI art style processing:
 
 1. **Ensure ComfyUI is running** at `http://127.0.0.1:8188`
 2. **Create a workflow JSON** file (see ComfyUI documentation)
-3. **Update `main.py`** with `enable_comfyui=True` and set the correct `workflow_json_path`
+3. **Run the application** with ComfyUI enabled in settings
 
 ### First-Time Setup (Full Mode)
 
@@ -217,8 +181,8 @@ To enable ComfyUI art style processing:
 
 ### Full Workflow (With ComfyUI Processing)
 
-1. **Enable ComfyUI** in `main.py` by setting `enable_comfyui=True`
-2. **Configure workflow JSON** path in `main.py`
+1. **Enable ComfyUI** in the application settings
+2. **Configure workflow JSON** path in settings
 3. **Capture an image** as above
 4. **Monitor processing**:
    - The application automatically detects the new image
@@ -226,22 +190,6 @@ To enable ComfyUI art style processing:
    - Processing completion is indicated by another visual feedback
 
 5. **View results**:
-   - Processed images are saved to the configured output folder
-   - Open the folder to view your art-styled images
-
-### Basic Workflow
-
-1. **Capture an image**:
-   - Ensure the webcam feed is visible
-   - Press the **Space Bar** to capture the current frame
-   - Wait for visual feedback (subtle flash/border highlight)
-
-2. **Monitor processing**:
-   - The application automatically detects the new image
-   - Visual feedback indicates processing has started
-   - Processing completion is indicated by another visual feedback
-
-3. **View results**:
    - Processed images are saved to the configured output folder
    - Open the folder to view your art-styled images
 
@@ -340,20 +288,15 @@ tests/
 ### Running Tests
 
 ```bash
-# Unit tests
-pytest tests/unit/ -v
-
-# Integration tests
-pytest tests/integration/ -v
-
-# Contract tests
-pytest tests/contract/ -v
-
 # All tests
 pytest -v
 
 # Run with coverage
 pytest --cov=src --cov-report=html
+
+# Lint and format
+ruff check .
+ruff format .
 ```
 
 ### Code Quality
@@ -364,6 +307,9 @@ ruff check .
 
 # Format code
 ruff format .
+
+# Run tests
+pytest -v
 ```
 
 ## API Documentation

@@ -7,7 +7,7 @@ from tkinter import messagebox, ttk
 from typing import Optional
 
 import cv2
-from PIL import Image, ImageTk
+from PIL import ImageTk
 
 from src.lib.error_manager import ErrorManager
 from src.services.capture_service import CaptureService
@@ -69,9 +69,10 @@ class MainWindow:
         self._root.columnconfigure(0, weight=1)
         self._root.rowconfigure(0, weight=1)
         self._main_frame.columnconfigure(0, weight=1)
+        self._main_frame.columnconfigure(1, weight=0)  # Sidebar column
         self._main_frame.rowconfigure(0, weight=1)
 
-        # Video feed frame
+        # Video feed frame (left side)
         self._video_frame = ttk.LabelFrame(
             self._main_frame, text="Video Feed", padding="5"
         )
@@ -82,9 +83,41 @@ class MainWindow:
         # Video label for displaying frames
         self._video_label = ttk.Label(self._video_frame)
         self._video_label.grid(row=0, column=0, sticky="nsew")
-        
+
         # Placeholder for the current photo image (created later when window is visible)
         self._current_photo = None
+
+        # Video display settings
+        self._display_width = 1280
+        self._display_height = 720
+
+        # Sidebar frame (right side)
+        self._sidebar_frame = ttk.Frame(self._main_frame, padding="5")
+        self._sidebar_frame.grid(row=0, column=1, sticky="ns", padx=(10, 0))
+        self._sidebar_frame.rowconfigure(0, weight=1)
+
+        # Workflow selection section
+        workflow_frame = ttk.LabelFrame(
+            self._sidebar_frame, text="Workflow Selection", padding="5"
+        )
+        workflow_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Workflow dropdown
+        self._workflow_var = tk.StringVar()
+        self._workflow_dropdown = ttk.Combobox(
+            workflow_frame, textvariable=self._workflow_var, state="readonly", width=30
+        )
+        self._workflow_dropdown.grid(row=0, column=0, sticky="ew", pady=5)
+        self._workflow_dropdown.bind("<<ComboboxSelected>>", self._on_workflow_change)
+
+        # Workflow info label
+        self._workflow_info_label = ttk.Label(
+            workflow_frame,
+            text="Select a workflow to apply",
+            wraplength=200,
+            foreground="gray",
+        )
+        self._workflow_info_label.grid(row=1, column=0, sticky="ew", pady=(5, 0))
 
         # Status frame
         self._status_frame = ttk.Frame(self._main_frame, padding="5")
@@ -260,18 +293,45 @@ class MainWindow:
 
         # Update ComfyUI service endpoint and timeout if available
         if self._comfyui_service:
-            self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip("/")
-            self._comfyui_service._timeout = settings.api_timeout
+            self._comfyui_service.set_endpoint(settings.comfyui_endpoint.rstrip("/"))
+            self._comfyui_service.set_timeout(settings.api_timeout)
 
         # Update orchestrator if available
         if self._orchestrator:
             self._orchestrator.update_settings(settings)
+
+        # Update workflow dropdown with loaded workflows
+        if hasattr(settings, "workflow_configs") and settings.workflow_configs:
+            workflow_names = [w.name for w in settings.workflow_configs if w.name]
+            self._workflow_dropdown["values"] = workflow_names
+            if workflow_names:
+                self._workflow_var.set(workflow_names[0])
 
         # Update status label
         self._status_label.config(
             text=f"Status: Settings applied - {settings.output_folder}",
             foreground="green",
         )
+
+    def _on_workflow_change(self, event=None) -> None:
+        """Handle workflow selection change.
+
+        Args:
+            event: The event object (optional)
+        """
+        selected_workflow = self._workflow_var.get().strip()
+        if selected_workflow:
+            self._status_label.config(
+                text=f"Status: Workflow selected - {selected_workflow}",
+                foreground="blue",
+            )
+            # Clear status after 3 seconds
+            self._root.after(
+                3000,
+                lambda: self._status_label.config(
+                    text="Status: Ready", foreground="green"
+                ),
+            )
 
     def _on_quit(self) -> None:
         """Handle quit button press."""
@@ -306,7 +366,7 @@ class MainWindow:
                 # cv2.imdecode expects a numpy array, not bytes
                 frame_array = np.frombuffer(frame_data, dtype=np.uint8)
                 frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
-                
+
                 if frame is None:
                     logger.error("Failed to decode frame")
                     self._schedule_next_frame()
@@ -315,14 +375,53 @@ class MainWindow:
                 # Convert BGR to RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                # Convert to PhotoImage
+                # Get original frame dimensions
+                original_height, original_width = frame.shape[:2]
+
+                # Calculate display area size (accounting for padding)
+                display_width = (
+                    self._video_frame.winfo_width() - 20
+                    if self._video_frame.winfo_width() > 1
+                    else self._display_width
+                )
+                display_height = (
+                    self._video_frame.winfo_height() - 60
+                    if self._video_frame.winfo_height() > 1
+                    else self._display_height
+                )
+
+                # Calculate aspect ratio
+                frame_aspect = original_width / original_height
+                display_aspect = display_width / display_height
+
+                # Determine scaled dimensions while maintaining aspect ratio
+                if frame_aspect > display_aspect:
+                    # Width is the limiting factor
+                    scaled_width = display_width
+                    scaled_height = int(display_width / frame_aspect)
+                else:
+                    # Height is the limiting factor
+                    scaled_height = display_height
+                    scaled_width = int(display_height * frame_aspect)
+
+                # Ensure minimum display size
+                scaled_width = max(320, scaled_width)
+                scaled_height = max(240, scaled_height)
+
+                # Resize frame to fit display area
                 pil_image = Image.fromarray(frame)
-                photo = ImageTk.PhotoImage(image=pil_image)
+                resized_image = pil_image.resize(
+                    (scaled_width, scaled_height), Image.Resampling.LANCZOS
+                )
+
+                # Convert to PhotoImage
+                photo = ImageTk.PhotoImage(image=resized_image)
 
                 # Update label - check if widget still exists
                 try:
                     self._video_label.config(image=photo)
-                    self._video_label.image = photo  # Keep reference
+                    # Store reference in the instance variable to prevent garbage collection
+                    self._current_photo = photo
                 except tk.TclError:
                     # Widget may have been destroyed
                     pass
@@ -331,6 +430,7 @@ class MainWindow:
             # Log error but continue trying
             logger.error(f"Video feed update error: {e}")
             import traceback
+
             logger.error(f"Video feed traceback: {traceback.format_exc()}")
 
         # Schedule next frame update
@@ -391,11 +491,11 @@ class MainWindow:
 
             # Start main loop first
             self._running = True
-        
+
             # Schedule video feed update after window is visible
             # Use after_idle to ensure all pending events are processed first
             self._root.after_idle(self._update_video_feed)
-            
+
             # Start main loop
             self._root.mainloop()
 
@@ -415,6 +515,7 @@ class MainWindow:
                 logger.debug(f"Video feed loop error: {e}")
             # Sleep to avoid busy-waiting
             import time
+
             time.sleep(0.033)  # ~30 FPS
 
     def stop(self) -> None:

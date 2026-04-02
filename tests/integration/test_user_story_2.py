@@ -126,13 +126,19 @@ class MockComfyUIService(IComfyUIService):
             raise APIConnectionError("Cannot connect to ComfyUI")
         return {"prompt_id": prompt_id, "status": "completed"}
 
-    def download_outputs(
-        self, prompt_id: str, output_folder: str
-    ) -> list:
+    def download_outputs(self, prompt_id: str, output_folder: str) -> list:
         """Download processed images from ComfyUI."""
         if not self._available:
             raise APIConnectionError("Cannot connect to ComfyUI")
         return []
+
+    def set_endpoint(self, endpoint: str) -> None:
+        """Set the ComfyUI API endpoint."""
+        self._endpoint = endpoint
+
+    def set_timeout(self, timeout: int) -> None:
+        """Set the request timeout in seconds."""
+        self._timeout = timeout
 
 
 class MockCaptureQueue(ICaptureQueue):

@@ -15,7 +15,8 @@ class SettingsDialog:
     This dialog allows users to configure:
     - Output folder for captured images
     - ComfyUI API endpoint
-    - Workflow JSON file path
+    - 4 Workflow JSON file paths (each with a name)
+    - Email address for notifications
     - API timeout settings
     """
 
@@ -39,7 +40,7 @@ class SettingsDialog:
         # Create dialog window
         self._dialog = tk.Toplevel(parent)
         self._dialog.title("Settings")
-        self._dialog.geometry("600x500")
+        self._dialog.geometry("700x900")
         self._dialog.resizable(False, False)
 
         # Center dialog on parent
@@ -49,6 +50,13 @@ class SettingsDialog:
         # Result storage
         self._result: Optional[ApplicationSettings] = None
         self._settings_changed = False
+
+        # Workflow config variables storage (name + path pairs)
+        self._workflow_name_vars: list[tk.StringVar] = []
+        self._workflow_path_vars: list[tk.StringVar] = []
+
+        # Email address variable
+        self._email_address_var = tk.StringVar()
 
         # Build UI
         self._build_ui()
@@ -95,37 +103,67 @@ class SettingsDialog:
         )
         self._test_connection_button.grid(row=1, column=2, pady=5, padx=5)
 
-        # Workflow JSON path section
-        ttk.Label(main_frame, text="Workflow JSON:").grid(
-            row=2, column=0, sticky="w", pady=5
-        )
-        self._workflow_json_var = tk.StringVar()
-        self._workflow_json_entry = ttk.Entry(
-            main_frame, textvariable=self._workflow_json_var, width=50
-        )
-        self._workflow_json_entry.grid(row=2, column=1, sticky="ew", pady=5, padx=5)
-        self._browse_workflow_button = ttk.Button(
-            main_frame, text="Browse...", command=self._browse_workflow_json
-        )
-        self._browse_workflow_button.grid(row=2, column=2, pady=5, padx=5)
+        # Workflow JSON path sections (4 configurations)
+        workflow_start_row = 2
+        for i in range(4):
+            ttk.Label(main_frame, text=f"Workflow {i + 1} Name:").grid(
+                row=workflow_start_row + i * 2, column=0, sticky="w", pady=2
+            )
+            name_var = tk.StringVar()
+            self._workflow_name_vars.append(name_var)
+            name_entry = ttk.Entry(main_frame, textvariable=name_var, width=50)
+            name_entry.grid(
+                row=workflow_start_row + i * 2, column=1, sticky="ew", pady=2, padx=5
+            )
 
-        # API timeout section
+            ttk.Label(main_frame, text=f"Workflow {i + 1} JSON:").grid(
+                row=workflow_start_row + i * 2 + 1, column=0, sticky="w", pady=2
+            )
+            path_var = tk.StringVar()
+            self._workflow_path_vars.append(path_var)
+            path_entry = ttk.Entry(main_frame, textvariable=path_var, width=50)
+            path_entry.grid(
+                row=workflow_start_row + i * 2 + 1,
+                column=1,
+                sticky="ew",
+                pady=2,
+                padx=5,
+            )
+            browse_button = ttk.Button(
+                main_frame,
+                text="Browse...",
+                command=lambda idx=i: self._browse_workflow_json(idx),
+            )
+            browse_button.grid(
+                row=workflow_start_row + i * 2 + 1, column=2, pady=2, padx=5
+            )
+
+        # Email address section (placed after workflow selection)
+        ttk.Label(main_frame, text="Email Address:").grid(
+            row=10, column=0, sticky="w", pady=5
+        )
+        self._email_address_entry = ttk.Entry(
+            main_frame, textvariable=self._email_address_var, width=50
+        )
+        self._email_address_entry.grid(row=10, column=1, sticky="ew", pady=5, padx=5)
+
+        # API timeout section (placed after email address)
         ttk.Label(main_frame, text="API Timeout (seconds):").grid(
-            row=3, column=0, sticky="w", pady=5
+            row=11, column=0, sticky="w", pady=5
         )
         self._api_timeout_var = tk.StringVar(value="30")
         self._api_timeout_entry = ttk.Entry(
             main_frame, textvariable=self._api_timeout_var, width=10
         )
-        self._api_timeout_entry.grid(row=3, column=1, sticky="w", pady=5, padx=5)
+        self._api_timeout_entry.grid(row=11, column=1, sticky="w", pady=5, padx=5)
 
         # Status label
         self._status_label = ttk.Label(main_frame, text="", foreground="blue")
-        self._status_label.grid(row=4, column=0, columnspan=3, pady=10)
+        self._status_label.grid(row=12, column=0, columnspan=3, pady=10)
 
         # Buttons frame
         buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.grid(row=5, column=0, columnspan=3, pady=10)
+        buttons_frame.grid(row=13, column=0, columnspan=3, pady=10)
 
         # Save button
         self._save_button = ttk.Button(
@@ -146,8 +184,31 @@ class SettingsDialog:
             if settings:
                 self._output_folder_var.set(settings.output_folder)
                 self._comfyui_endpoint_var.set(settings.comfyui_endpoint)
-                self._workflow_json_var.set(settings.workflow_json_path)
+                # Load workflow configs
+                for i, config in enumerate(settings.workflow_configs):
+                    if i < len(self._workflow_name_vars):
+                        self._workflow_name_vars[i].set(config.name)
+                        self._workflow_path_vars[i].set(config.path)
+                self._email_address_var.set(settings.email_address)
                 self._api_timeout_var.set(str(settings.api_timeout))
+            else:
+                # Use defaults if settings not loaded
+                defaults = self._settings_service.get_default_settings()
+                self._output_folder_var.set(defaults.get("output_folder", "captures"))
+                self._comfyui_endpoint_var.set(
+                    defaults.get("comfyui_endpoint", "http://127.0.0.1:8188")
+                )
+                # Set default workflow configs
+                for i in range(4):
+                    if i < len(self._workflow_path_vars):
+                        self._workflow_path_vars[i].set(
+                            defaults.get(f"workflow_{i}_path", "")
+                        )
+                        self._workflow_name_vars[i].set(
+                            defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
+                        )
+                self._email_address_var.set(defaults.get("email_address", ""))
+                self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
         except Exception:
             # Use defaults if settings not loaded
             defaults = self._settings_service.get_default_settings()
@@ -155,9 +216,16 @@ class SettingsDialog:
             self._comfyui_endpoint_var.set(
                 defaults.get("comfyui_endpoint", "http://127.0.0.1:8188")
             )
-            self._workflow_json_var.set(
-                defaults.get("workflow_json_path", "workflow.json")
-            )
+            # Set default workflow configs
+            for i in range(4):
+                if i < len(self._workflow_path_vars):
+                    self._workflow_path_vars[i].set(
+                        defaults.get(f"workflow_{i}_path", "")
+                    )
+                    self._workflow_name_vars[i].set(
+                        defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
+                    )
+            self._email_address_var.set(defaults.get("email_address", ""))
             self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
 
     def _browse_output_folder(self) -> None:
@@ -169,15 +237,19 @@ class SettingsDialog:
         if folder:
             self._output_folder_var.set(folder)
 
-    def _browse_workflow_json(self) -> None:
-        """Open file dialog to select workflow JSON file."""
+    def _browse_workflow_json(self, index: int) -> None:
+        """Open file dialog to select workflow JSON file.
+
+        Args:
+            index: Index of the workflow config (0-3)
+        """
         file_path = filedialog.askopenfilename(
             title="Select Workflow JSON",
-            initialdir=self._workflow_json_var.get() or ".",
+            initialdir=self._workflow_path_vars[index].get() or ".",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
         )
         if file_path:
-            self._workflow_json_var.set(file_path)
+            self._workflow_path_vars[index].set(file_path)
 
     def _test_connection(self) -> None:
         """Test connection to ComfyUI API."""
@@ -216,7 +288,6 @@ class SettingsDialog:
         """
         output_folder = self._output_folder_var.get().strip()
         comfyui_endpoint = self._comfyui_endpoint_var.get().strip()
-        workflow_json = self._workflow_json_var.get().strip()
         api_timeout = self._api_timeout_var.get().strip()
 
         # Validate output folder
@@ -229,9 +300,12 @@ class SettingsDialog:
             messagebox.showerror("Error", "Please enter a ComfyUI endpoint")
             return False
 
-        # Validate workflow JSON
-        if not workflow_json:
-            messagebox.showerror("Error", "Please select a workflow JSON file")
+        # At least one workflow must have a path
+        has_workflow = any(var.get().strip() for var in self._workflow_path_vars)
+        if not has_workflow:
+            messagebox.showerror(
+                "Error", "Please select at least one workflow JSON file"
+            )
             return False
 
         # Validate API timeout
@@ -251,12 +325,26 @@ class SettingsDialog:
             return
 
         try:
+            # Collect workflow configs
+            workflow_configs = []
+            for i in range(4):
+                name = self._workflow_name_vars[i].get().strip()
+                path = self._workflow_path_vars[i].get().strip()
+                if path:  # Only add if path is provided
+                    workflow_configs.append({"name": name, "path": path})
+
             # Create settings object
+            from src.models.application_settings import WorkflowConfig
+
             settings = ApplicationSettings(
                 output_folder=self._output_folder_var.get().strip(),
                 comfyui_endpoint=self._comfyui_endpoint_var.get().strip(),
-                workflow_json_path=self._workflow_json_var.get().strip(),
+                workflow_configs=[
+                    WorkflowConfig(name=c["name"], path=c["path"])
+                    for c in workflow_configs
+                ],
                 api_timeout=int(self._api_timeout_var.get().strip()),
+                email_address=self._email_address_var.get().strip(),
             )
 
             # Validate settings

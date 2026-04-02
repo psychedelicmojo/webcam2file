@@ -1,6 +1,45 @@
 {
   "output_folder": "C:/Users/datom/Software Development/webcam2file/captures",
   "comfyui_endpoint": "http://127.0.0.1:8000",
-  "workflow_json_path": "C:/Users/datom/Software Development/webcam2file/workflows/flux_kontext_dev_basic_api.json",
-  "api_timeout": 300
+  "workflow_configs": [
+    {
+      "name": "Studio G",
+      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Studio_Ghibli_flux_kontext_dev.json"
+    },
+    {
+      "name": "Saturday Morning.",
+      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Saturday_morning_cartoon_flux_kontext_dev.json"
+    },
+    {
+      "name": "Comic Book Hero Poster",
+      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Comic-book_hero_poster_flux_kontext_dev.json"
+    },
+    {
+      "name": "",
+      "path": ""
+    }
+  ],
+  "api_timeout": 90,
+  "art_styles": [
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
+    },
+    {
+      "name": "",
+      "path": ""
+    }
+  ]
 }
