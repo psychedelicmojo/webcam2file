@@ -319,6 +319,7 @@ class TestApplicationSettingsUnit:
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
             ],
+            "email_address": "",
         }
 
     def test_from_dict(self, tmp_path):
@@ -429,6 +430,7 @@ class TestApplicationSettingsUnit:
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
             ],
+            "email_address": "",
         }
 
     def test_load_from_file(self, tmp_path):

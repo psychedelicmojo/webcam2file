@@ -44,6 +44,7 @@ class ApplicationSettings:
         art_styles: List of 5 art style configurations (name + path pairs)
         api_timeout: Timeout in seconds for API requests (default: 30)
         enable_comfyui: Whether ComfyUI integration is enabled (default: True)
+        email_address: Email address for notifications (optional)
     """
 
     output_folder: str
@@ -63,6 +64,7 @@ class ApplicationSettings:
     ])
     api_timeout: int = 30
     enable_comfyui: bool = True
+    email_address: str = ""
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
@@ -191,6 +193,7 @@ class ApplicationSettings:
                 {"name": config.name, "path": config.path}
                 for config in self.art_styles or []
             ],
+            "email_address": self.email_address,
         }
 
     @classmethod
@@ -251,6 +254,7 @@ class ApplicationSettings:
             workflow_configs=workflow_configs,
             api_timeout=data.get("api_timeout", 30),
             art_styles=art_styles,
+            email_address=data.get("email_address", ""),
         )
 
     def save_to_file(self, filepath: str) -> None:
