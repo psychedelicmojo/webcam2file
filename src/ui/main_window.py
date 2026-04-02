@@ -105,13 +105,32 @@ class MainWindow:
         # Sidebar frame (right side)
         self._sidebar_frame = ttk.Frame(self._main_frame, padding="5")
         self._sidebar_frame.grid(row=0, column=1, sticky="ns", padx=(10, 0))
-        self._sidebar_frame.rowconfigure(0, weight=1)
+        self._sidebar_frame.columnconfigure(0, weight=1)
+        self._sidebar_frame.rowconfigure(1, weight=1)  # workflow section expands
+
+        # Capture button style — larger, prominent
+        _style = ttk.Style()
+        _style.configure(
+            "Capture.TButton",
+            font=("Segoe UI", 16, "bold"),
+            padding=(10, 18),
+        )
+
+        # Capture button at the top of the sidebar
+        self._capture_button = ttk.Button(
+            self._sidebar_frame,
+            text="Capture Image",
+            command=self._on_capture,
+            style="Capture.TButton",
+        )
+        self._capture_button.grid(row=0, column=0, sticky="ew", pady=(0, 10))
 
         # Workflow selection section
         workflow_frame = ttk.LabelFrame(
             self._sidebar_frame, text="Workflow Selection", padding="5"
         )
-        workflow_frame.grid(row=0, column=0, sticky="nsew")
+        workflow_frame.grid(row=1, column=0, sticky="new")
+        workflow_frame.columnconfigure(0, weight=1)
 
         # Workflow dropdown
         self._workflow_var = tk.StringVar()
@@ -130,7 +149,25 @@ class MainWindow:
         )
         self._workflow_info_label.grid(row=1, column=0, sticky="ew", pady=(5, 0))
 
-        # Status frame
+        # Controls section — Settings and Quit
+        controls_frame = ttk.LabelFrame(
+            self._sidebar_frame, text="Controls", padding="5"
+        )
+        controls_frame.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+        controls_frame.columnconfigure(0, weight=1)
+        controls_frame.columnconfigure(1, weight=1)
+
+        self._settings_button = ttk.Button(
+            controls_frame, text="Settings", command=self._on_settings
+        )
+        self._settings_button.grid(row=0, column=0, sticky="ew", padx=(0, 5), pady=5)
+
+        self._quit_button = ttk.Button(
+            controls_frame, text="Quit", command=self._on_quit
+        )
+        self._quit_button.grid(row=0, column=1, sticky="ew", padx=(5, 0), pady=5)
+
+        # Status frame (below video feed)
         self._status_frame = ttk.Frame(self._main_frame, padding="5")
         self._status_frame.grid(row=1, column=0, sticky="ew")
 
@@ -139,28 +176,6 @@ class MainWindow:
             self._status_frame, text="Status: Ready", foreground="green"
         )
         self._status_label.grid(row=0, column=0, sticky="w")
-
-        # Controls frame
-        self._controls_frame = ttk.Frame(self._main_frame, padding="5")
-        self._controls_frame.grid(row=2, column=0, sticky="ew")
-
-        # Capture button
-        self._capture_button = ttk.Button(
-            self._controls_frame, text="Capture Image", command=self._on_capture
-        )
-        self._capture_button.grid(row=0, column=0, padx=5)
-
-        # Settings button
-        self._settings_button = ttk.Button(
-            self._controls_frame, text="Settings", command=self._on_settings
-        )
-        self._settings_button.grid(row=0, column=1, padx=5)
-
-        # Quit button
-        self._quit_button = ttk.Button(
-            self._controls_frame, text="Quit", command=self._on_quit
-        )
-        self._quit_button.grid(row=0, column=2, padx=5)
 
         # Feedback indicator
         self._feedback_label = ttk.Label(self._status_frame, text="", foreground="blue")
