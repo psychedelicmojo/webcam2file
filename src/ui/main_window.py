@@ -256,6 +256,21 @@ class MainWindow:
         )
         self._email_status_label.pack(side="left", padx=10)
 
+        # Full-window flash overlay — shown briefly at the moment of capture.
+        # Sits on the root window so it covers everything.
+        self._flash_overlay = tk.Frame(self._root, background="white")
+
+        # Processing notice overlay — shown on the preview area while ComfyUI renders.
+        self._processing_notice = tk.Label(
+            self._preview_frame,
+            text="Generating AI image, please wait...",
+            font=("Segoe UI", 16, "bold"),
+            foreground="white",
+            background="#0055cc",
+            padx=20,
+            pady=12,
+        )
+
         # Video capture thread
         self._video_thread: Optional[threading.Thread] = None
         self._running = False
@@ -315,6 +330,7 @@ class MainWindow:
     def _do_capture(self) -> None:
         """Execute the actual webcam capture."""
         try:
+            self._do_flash()
             self._status_label.config(text="Status: Capturing...", foreground="orange")
             self._capture_button.config(state=tk.DISABLED)
 
@@ -490,6 +506,33 @@ class MainWindow:
                     text="Status: Ready", foreground="green"
                 ),
             )
+
+    # ------------------------------------------------------------------
+    # Flash and processing notice
+    # ------------------------------------------------------------------
+
+    def _do_flash(self) -> None:
+        """Flash the whole window white to simulate a camera shutter."""
+        self._flash_overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        self._flash_overlay.lift()
+        self._root.after(120, self._flash_overlay.place_forget)
+
+    def _show_processing_notice(self) -> None:
+        """Show the 'please wait' banner over the preview area."""
+        self._processing_notice.place(relx=0.5, rely=0.5, anchor="center")
+        self._processing_notice.lift()
+
+    def _hide_processing_notice(self) -> None:
+        """Remove the processing banner from the preview area."""
+        self._processing_notice.place_forget()
+
+    def _on_orchestrator_status_change(self, status) -> None:
+        """React to orchestrator state changes on the main thread."""
+        if status.state == "processing":
+            self._show_processing_notice()
+        else:
+            self._hide_processing_notice()
+        self._update_status_label()
 
     # ------------------------------------------------------------------
     # Preview panel
@@ -775,6 +818,9 @@ class MainWindow:
 
             # Start orchestrator if available (User Story 2)
             if self._orchestrator is not None:
+                self._orchestrator.set_on_status_change(
+                    lambda s: self._root.after(0, lambda: self._on_orchestrator_status_change(s))
+                )
                 self._orchestrator.start()
                 self._update_status_label()
 
