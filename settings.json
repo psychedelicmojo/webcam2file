@@ -27,12 +27,12 @@
       "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Paper_cutout_craft_flux_kontext_dev.json"
     },
     {
-      "name": "",
-      "path": ""
+      "name": "Cute chibi mascot",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Cute_chibi_mascot_flux_kontext_dev.json"
     },
     {
-      "name": "",
-      "path": ""
+      "name": "Stop-motion clay figure",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Stop-motion_clay_figure_flux_kontext_dev.json"
     }
   ],
   "api_timeout": 60,

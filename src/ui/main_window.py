@@ -644,6 +644,7 @@ class MainWindow:
         def _send():
             try:
                 self._email_service.send_image(image_path, email)
+                self._root.after(0, lambda: self._email_var.set(""))
                 self._root.after(
                     0,
                     lambda: self._email_status_label.config(
