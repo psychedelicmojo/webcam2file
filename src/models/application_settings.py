@@ -203,15 +203,24 @@ class ApplicationSettings:
         Returns:
             New ApplicationSettings instance
         """
-        workflow_configs_data = data.get(
-            "workflow_configs",
-            [
+        # Handle old format with workflow_json_path (single path string)
+        if "workflow_json_path" in data:
+            workflow_configs_data = [
+                {"name": "Workflow 1", "path": data["workflow_json_path"]},
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
                 {"name": "", "path": ""},
-                {"name": "", "path": ""},
-            ],
-        )
+            ]
+        else:
+            workflow_configs_data = data.get(
+                "workflow_configs",
+                [
+                    {"name": "", "path": ""},
+                    {"name": "", "path": ""},
+                    {"name": "", "path": ""},
+                    {"name": "", "path": ""},
+                ],
+            )
         # Ensure exactly 4 workflow configs
         while len(workflow_configs_data) < 4:
             workflow_configs_data.append({"name": "", "path": ""})

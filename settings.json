@@ -1,6 +1,18 @@
 {
-  "output_folder": "C:/Users/datom/Software Development/webcam2file/captures",
-  "comfyui_endpoint": "http://127.0.0.1:8000",
-  "workflow_json_path": "C:/Users/datom/Software Development/webcam2file/workflows/flux_kontext_dev_basic_api.json",
-  "api_timeout": 300
+  "output_folder": "captures",
+  "comfyui_endpoint": "http://127.0.0.1:8188",
+  "workflow_configs": [
+    {"name": "Workflow 1", "path": ""},
+    {"name": "", "path": ""},
+    {"name": "", "path": ""},
+    {"name": "", "path": ""}
+  ],
+  "art_styles": [
+    {"name": "", "path": ""},
+    {"name": "", "path": ""},
+    {"name": "", "path": ""},
+    {"name": "", "path": ""},
+    {"name": "", "path": ""}
+  ],
+  "api_timeout": 30
 }
