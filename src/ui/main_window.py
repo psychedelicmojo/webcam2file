@@ -42,6 +42,7 @@ class MainWindow:
         email_service: Optional[IEmailService] = None,
         initial_email: str = "",
         initial_countdown: int = 3,
+        initial_settings=None,
     ):
         """Initialize the main window.
 
@@ -74,7 +75,13 @@ class MainWindow:
 
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
-        self._root.geometry("1280x720")
+
+        # Size the window to 80% of the current display resolution
+        screen_w = self._root.winfo_screenwidth()
+        screen_h = self._root.winfo_screenheight()
+        win_w = int(screen_w * 0.8)
+        win_h = int(screen_h * 0.8)
+        self._root.geometry(f"{win_w}x{win_h}")
         self._root.minsize(640, 480)
 
         # Create main frame
@@ -259,6 +266,12 @@ class MainWindow:
 
         # Handle window close
         self._root.protocol("WM_DELETE_WINDOW", self._on_quit)
+
+        # Apply initial settings so the workflow dropdown and other fields are
+        # populated immediately on startup without the user opening Settings first.
+        if initial_settings is not None:
+            self._apply_settings(initial_settings)
+            self._status_label.config(text="Status: Ready", foreground="green")
 
     def _on_space_bar(self, event: tk.Event) -> None:
         """Handle space bar press for capture."""
