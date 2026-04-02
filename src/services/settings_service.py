@@ -26,7 +26,7 @@ class SettingsService:
     DEFAULT_SETTINGS = {
         "output_folder": "captures",
         "comfyui_endpoint": "http://127.0.0.1:8188",
-        "workflow_configs": [{"name": "", "path": ""} for _ in range(10)],
+        "workflow_configs": [{"name": "", "path": ""} for _ in range(13)],
         "art_styles": [
             {"name": "", "path": ""},
             {"name": "", "path": ""},
