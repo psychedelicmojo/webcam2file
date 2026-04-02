@@ -69,9 +69,10 @@ class MainWindow:
         self._root.columnconfigure(0, weight=1)
         self._root.rowconfigure(0, weight=1)
         self._main_frame.columnconfigure(0, weight=1)
+        self._main_frame.columnconfigure(1, weight=0)  # Sidebar column
         self._main_frame.rowconfigure(0, weight=1)
 
-        # Video feed frame
+        # Video feed frame (left side)
         self._video_frame = ttk.LabelFrame(
             self._main_frame, text="Video Feed", padding="5"
         )
@@ -85,6 +86,39 @@ class MainWindow:
         
         # Placeholder for the current photo image (created later when window is visible)
         self._current_photo = None
+        
+        # Video display settings
+        self._display_width = 1280
+        self._display_height = 720
+
+        # Sidebar frame (right side)
+        self._sidebar_frame = ttk.Frame(self._main_frame, padding="5")
+        self._sidebar_frame.grid(row=0, column=1, sticky="ns", padx=(10, 0))
+        self._sidebar_frame.rowconfigure(0, weight=1)
+
+        # Style selection section
+        style_frame = ttk.LabelFrame(self._sidebar_frame, text="Style Selection", padding="5")
+        style_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Style dropdown
+        self._style_var = tk.StringVar()
+        self._style_dropdown = ttk.Combobox(
+            style_frame,
+            textvariable=self._style_var,
+            state="readonly",
+            width=30
+        )
+        self._style_dropdown.grid(row=0, column=0, sticky="ew", pady=5)
+        self._style_dropdown.bind("<<ComboboxSelected>>", self._on_style_change)
+
+        # Style info label
+        self._style_info_label = ttk.Label(
+            style_frame,
+            text="Select an art style to apply",
+            wraplength=200,
+            foreground="gray"
+        )
+        self._style_info_label.grid(row=1, column=0, sticky="ew", pady=(5, 0))
 
         # Status frame
         self._status_frame = ttk.Frame(self._main_frame, padding="5")
@@ -260,18 +294,41 @@ class MainWindow:
 
         # Update ComfyUI service endpoint and timeout if available
         if self._comfyui_service:
-            self._comfyui_service._endpoint = settings.comfyui_endpoint.rstrip("/")
-            self._comfyui_service._timeout = settings.api_timeout
+            self._comfyui_service.set_endpoint(settings.comfyui_endpoint.rstrip("/"))
+            self._comfyui_service.set_timeout(settings.api_timeout)
 
         # Update orchestrator if available
         if self._orchestrator:
             self._orchestrator.update_settings(settings)
+
+        # Update style dropdown with loaded styles
+        if hasattr(settings, 'art_styles') and settings.art_styles:
+            self._style_dropdown['values'] = settings.art_styles
+            if settings.art_styles:
+                self._style_var.set(settings.art_styles[0])
 
         # Update status label
         self._status_label.config(
             text=f"Status: Settings applied - {settings.output_folder}",
             foreground="green",
         )
+
+    def _on_style_change(self, event=None) -> None:
+        """Handle style selection change.
+
+        Args:
+            event: The event object (optional)
+        """
+        selected_style = self._style_var.get().strip()
+        if selected_style:
+            self._status_label.config(
+                text=f"Status: Style selected - {selected_style}",
+                foreground="blue",
+            )
+            # Clear status after 3 seconds
+            self._root.after(3000, lambda: self._status_label.config(
+                text=f"Status: Ready", foreground="green"
+            ))
 
     def _on_quit(self) -> None:
         """Handle quit button press."""
@@ -306,7 +363,7 @@ class MainWindow:
                 # cv2.imdecode expects a numpy array, not bytes
                 frame_array = np.frombuffer(frame_data, dtype=np.uint8)
                 frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
-                
+              
                 if frame is None:
                     logger.error("Failed to decode frame")
                     self._schedule_next_frame()
@@ -315,14 +372,43 @@ class MainWindow:
                 # Convert BGR to RGB
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                # Convert to PhotoImage
+                # Get original frame dimensions
+                original_height, original_width = frame.shape[:2]
+                
+                # Calculate display area size (accounting for padding)
+                display_width = self._video_frame.winfo_width() - 20 if self._video_frame.winfo_width() > 1 else self._display_width
+                display_height = self._video_frame.winfo_height() - 60 if self._video_frame.winfo_height() > 1 else self._display_height
+                
+                # Calculate aspect ratio
+                frame_aspect = original_width / original_height
+                display_aspect = display_width / display_height
+                
+                # Determine scaled dimensions while maintaining aspect ratio
+                if frame_aspect > display_aspect:
+                    # Width is the limiting factor
+                    scaled_width = display_width
+                    scaled_height = int(display_width / frame_aspect)
+                else:
+                    # Height is the limiting factor
+                    scaled_height = display_height
+                    scaled_width = int(display_height * frame_aspect)
+                
+                # Ensure minimum display size
+                scaled_width = max(320, scaled_width)
+                scaled_height = max(240, scaled_height)
+
+                # Resize frame to fit display area
                 pil_image = Image.fromarray(frame)
-                photo = ImageTk.PhotoImage(image=pil_image)
+                resized_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+
+                # Convert to PhotoImage
+                photo = ImageTk.PhotoImage(image=resized_image)
 
                 # Update label - check if widget still exists
                 try:
                     self._video_label.config(image=photo)
-                    self._video_label.image = photo  # Keep reference
+                    # Store reference in the instance variable to prevent garbage collection
+                    self._current_photo = photo
                 except tk.TclError:
                     # Widget may have been destroyed
                     pass

@@ -118,6 +118,24 @@ class IComfyUIService(ABC):
         pass
 
     @abstractmethod
+    def set_endpoint(self, endpoint: str) -> None:
+        """Set the ComfyUI API endpoint.
+
+        Args:
+            endpoint: ComfyUI API endpoint URL.
+        """
+        pass
+
+    @abstractmethod
+    def set_timeout(self, timeout: int) -> None:
+        """Set the request timeout in seconds.
+
+        Args:
+            timeout: Request timeout in seconds.
+        """
+        pass
+
+    @abstractmethod
     def download_outputs(
         self, prompt_id: str, output_folder: str
     ) -> List[str]:

@@ -28,6 +28,7 @@ class SettingsService:
         "comfyui_endpoint": "http://127.0.0.1:8188",
         "workflow_json_path": "workflow.json",
         "api_timeout": 30,
+        "art_styles": ["", "", "", "", ""],
     }
 
     def __init__(

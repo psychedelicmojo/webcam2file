@@ -371,3 +371,20 @@ class ComfyUIService(IComfyUIService):
             int: The timeout value.
         """
         return self._timeout
+
+    def set_endpoint(self, endpoint: str) -> None:
+        """Set the ComfyUI API endpoint.
+
+        Args:
+            endpoint: ComfyUI API endpoint URL.
+        """
+        self._endpoint = endpoint.rstrip("/")
+
+    def set_timeout(self, timeout: int) -> None:
+        """Set the request timeout in seconds.
+
+        Args:
+            timeout: Request timeout in seconds.
+        """
+        self._timeout = timeout
+

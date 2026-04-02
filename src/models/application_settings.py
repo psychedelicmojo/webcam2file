@@ -2,9 +2,35 @@
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
+
+
+@dataclass
+class WorkflowConfig:
+    """Configuration for a single workflow JSON file.
+
+    Attributes:
+        name: Display name for this workflow
+        path: Path to the ComfyUI workflow JSON file
+    """
+
+    name: str
+    path: str
+
+
+@dataclass
+class ArtStyleConfig:
+    """Configuration for a single art style.
+
+    Attributes:
+        name: Display name for this art style
+        path: Path to the art style file (image or JSON)
+    """
+
+    name: str
+    path: str
 
 
 @dataclass
@@ -14,18 +40,40 @@ class ApplicationSettings:
     Attributes:
         output_folder: Directory where captured images are saved
         comfyui_endpoint: ComfyUI API endpoint URL (optional, set to None to disable ComfyUI)
-        workflow_json_path: Path to the ComfyUI workflow JSON file (optional)
+        workflow_configs: List of 4 workflow configurations (name + path pairs)
+        art_styles: List of 5 art style configurations (name + path pairs)
         api_timeout: Timeout in seconds for API requests (default: 30)
+        enable_comfyui: Whether ComfyUI integration is enabled (default: True)
     """
 
     output_folder: str
     comfyui_endpoint: str
-    workflow_json_path: str
+    workflow_configs: list[WorkflowConfig] = field(default_factory=lambda: [
+        WorkflowConfig(name="", path=""),
+        WorkflowConfig(name="", path=""),
+        WorkflowConfig(name="", path=""),
+        WorkflowConfig(name="", path=""),
+    ])
+    art_styles: list[ArtStyleConfig] = field(default_factory=lambda: [
+        ArtStyleConfig(name="", path=""),
+        ArtStyleConfig(name="", path=""),
+        ArtStyleConfig(name="", path=""),
+        ArtStyleConfig(name="", path=""),
+        ArtStyleConfig(name="", path=""),
+    ])
     api_timeout: int = 30
     enable_comfyui: bool = True
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
+        # Ensure workflow_configs has exactly 4 entries
+        if len(self.workflow_configs) < 4:
+            while len(self.workflow_configs) < 4:
+                self.workflow_configs.append(WorkflowConfig(name="", path=""))
+        # Ensure art_styles has exactly 5 entries
+        if len(self.art_styles) < 5:
+            while len(self.art_styles) < 5:
+                self.art_styles.append(ArtStyleConfig(name="", path=""))
         self.validate()
 
     def is_comfyui_enabled(self) -> bool:
@@ -34,7 +82,22 @@ class ApplicationSettings:
         Returns:
             True if ComfyUI is enabled and configured, False otherwise.
         """
-        return self.enable_comfyui and bool(self.workflow_json_path)
+        return self.enable_comfyui and any(
+            config.path for config in self.workflow_configs
+        )
+
+    def get_workflow_config(self, index: int) -> WorkflowConfig | None:
+        """Get workflow configuration by index.
+
+        Args:
+            index: Index of the workflow config (0-3)
+
+        Returns:
+            WorkflowConfig at the given index, or None if out of range
+        """
+        if 0 <= index < len(self.workflow_configs):
+            return self.workflow_configs[index]
+        return None
 
     def validate(self) -> bool:
         """Validate all settings.
@@ -49,7 +112,10 @@ class ApplicationSettings:
         # Only validate ComfyUI settings if ComfyUI is enabled
         if self.enable_comfyui:
             self._validate_comfyui_endpoint()
-            self._validate_workflow_json_path()
+            # Validate all workflow configs that have paths
+            for i, config in enumerate(self.workflow_configs):
+                if config.path:
+                    self._validate_workflow_config(i)
         self._validate_api_timeout()
         return True
 
@@ -82,17 +148,23 @@ class ApplicationSettings:
                 f"Invalid ComfyUI endpoint URL: '{self.comfyui_endpoint}'"
             ) from e
 
-    def _validate_workflow_json_path(self) -> None:
-        """Validate workflow_json_path points to an existing file."""
-        path = Path(self.workflow_json_path)
-        if not path.exists():
-            raise ValueError(
-                f"Workflow JSON file does not exist: '{self.workflow_json_path}'"
-            )
-        if not path.is_file():
-            raise ValueError(
-                f"Workflow JSON path is not a file: '{self.workflow_json_path}'"
-            )
+    def _validate_workflow_config(self, index: int) -> None:
+        """Validate a specific workflow config path.
+
+        Args:
+            index: Index of the workflow config
+        """
+        config = self.workflow_configs[index]
+        if config.path:
+            path = Path(config.path)
+            if not path.exists():
+                raise ValueError(
+                    f"Workflow JSON file does not exist for '{config.name}': '{config.path}'"
+                )
+            if not path.is_file():
+                raise ValueError(
+                    f"Workflow JSON path is not a file for '{config.name}': '{config.path}'"
+                )
 
     def _validate_api_timeout(self) -> None:
         """Validate api_timeout is at least 1 second."""
@@ -110,8 +182,15 @@ class ApplicationSettings:
         return {
             "output_folder": self.output_folder,
             "comfyui_endpoint": self.comfyui_endpoint,
-            "workflow_json_path": self.workflow_json_path,
+            "workflow_configs": [
+                {"name": config.name, "path": config.path}
+                for config in self.workflow_configs
+            ],
             "api_timeout": self.api_timeout,
+            "art_styles": [
+                {"name": config.name, "path": config.path}
+                for config in self.art_styles or []
+            ],
         }
 
     @classmethod
@@ -124,11 +203,45 @@ class ApplicationSettings:
         Returns:
             New ApplicationSettings instance
         """
+        workflow_configs_data = data.get(
+            "workflow_configs",
+            [
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+            ],
+        )
+        # Ensure exactly 4 workflow configs
+        while len(workflow_configs_data) < 4:
+            workflow_configs_data.append({"name": "", "path": ""})
+        workflow_configs = [
+            WorkflowConfig(name=c["name"], path=c["path"])
+            for c in workflow_configs_data
+        ]
+        art_styles_data = data.get(
+            "art_styles",
+            [
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+                {"name": "", "path": ""},
+            ],
+        )
+        # Ensure exactly 5 art styles
+        while len(art_styles_data) < 5:
+            art_styles_data.append({"name": "", "path": ""})
+        art_styles = [
+            ArtStyleConfig(name=c["name"], path=c["path"])
+            for c in art_styles_data
+        ]
         return cls(
             output_folder=data["output_folder"],
             comfyui_endpoint=data["comfyui_endpoint"],
-            workflow_json_path=data["workflow_json_path"],
+            workflow_configs=workflow_configs,
             api_timeout=data.get("api_timeout", 30),
+            art_styles=art_styles,
         )
 
     def save_to_file(self, filepath: str) -> None:

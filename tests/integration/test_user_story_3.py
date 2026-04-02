@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models.application_settings import ApplicationSettings
+from src.models.application_settings import ApplicationSettings, WorkflowConfig
 from src.models.comfyui_workflow import ComfyUIWorkflow
 
 
@@ -26,7 +26,7 @@ class TestUserStory3Integration:
         original_settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
             api_timeout=45,
         )
 
@@ -40,9 +40,9 @@ class TestUserStory3Integration:
         # Verify loaded settings match original
         assert loaded_settings.output_folder == original_settings.output_folder
         assert loaded_settings.comfyui_endpoint == original_settings.comfyui_endpoint
-        assert (
-            loaded_settings.workflow_json_path == original_settings.workflow_json_path
-        )
+        assert len(loaded_settings.workflow_configs) == 4
+        assert loaded_settings.workflow_configs[0].name == original_settings.workflow_configs[0].name
+        assert loaded_settings.workflow_configs[0].path == original_settings.workflow_configs[0].path
         assert loaded_settings.api_timeout == original_settings.api_timeout
 
         # Verify loaded settings are valid (can be used immediately)
@@ -62,7 +62,7 @@ class TestUserStory3Integration:
         original_settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://localhost:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
             api_timeout=60,
         )
 
@@ -74,7 +74,8 @@ class TestUserStory3Integration:
         # Verify all fields match
         assert loaded_settings.output_folder == str(output_folder)
         assert loaded_settings.comfyui_endpoint == "http://localhost:8188"
-        assert loaded_settings.workflow_json_path == str(workflow_file)
+        assert len(loaded_settings.workflow_configs) == 4
+        assert loaded_settings.workflow_configs[0].path == str(workflow_file)
         assert loaded_settings.api_timeout == 60
 
     def test_connection_test_success(self, tmp_path):
@@ -91,7 +92,7 @@ class TestUserStory3Integration:
         settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
         )
 
         # Verify settings are valid
@@ -115,7 +116,7 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="invalid-endpoint",
-                workflow_json_path=str(workflow_file),
+                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
             )
 
     def test_workflow_validation_success(self, tmp_path):
@@ -154,14 +155,14 @@ class TestUserStory3Integration:
         settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
         )
 
         # Verify settings are valid
         assert settings.validate() is True
 
         # Verify workflow file exists and can be read
-        assert Path(settings.workflow_json_path).exists()
+        assert Path(settings.workflow_configs[0].path).exists()
 
     def test_workflow_validation_missing_file(self, tmp_path):
         """Verify workflow validation fails with missing workflow file."""
@@ -174,7 +175,7 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_json_path=str(tmp_path / "non_existent_workflow.json"),
+                workflow_configs=[WorkflowConfig(name="Style 1", path=str(tmp_path / "non_existent_workflow.json"))],
             )
 
         # Verify error message
@@ -195,7 +196,7 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_json_path=str(not_a_file),
+                workflow_configs=[WorkflowConfig(name="Style 1", path=str(not_a_file))],
             )
 
         # Verify error message
@@ -209,7 +210,7 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(non_existent),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_json_path=str(tmp_path / "workflow.json"),
+                workflow_configs=[WorkflowConfig(name="Style 1", path=str(tmp_path / "workflow.json"))],
             )
         assert "Output folder does not exist" in str(exc_info.value)
 
@@ -224,7 +225,7 @@ class TestUserStory3Integration:
         settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
         )
         assert settings.validate() is True
 
@@ -243,7 +244,7 @@ class TestUserStory3Integration:
             settings = ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_json_path=str(workflow_file),
+                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
                 api_timeout=timeout,
             )
             assert settings.validate() is True
@@ -255,7 +256,7 @@ class TestUserStory3Integration:
                 ApplicationSettings(
                     output_folder=str(output_folder),
                     comfyui_endpoint="http://127.0.0.1:8188",
-                    workflow_json_path=str(workflow_file),
+                    workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
                     api_timeout=invalid_timeout,
                 )
             assert "Invalid api_timeout" in str(exc_info.value)
@@ -287,7 +288,7 @@ class TestUserStory3Integration:
         settings = ApplicationSettings(
             output_folder=str(output_folder),
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path=str(workflow_file),
+            workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
             api_timeout=30,
         )
 
@@ -298,7 +299,7 @@ class TestUserStory3Integration:
         settings_dict = settings.to_dict()
         assert "output_folder" in settings_dict
         assert "comfyui_endpoint" in settings_dict
-        assert "workflow_json_path" in settings_dict
+        assert "workflow_configs" in settings_dict
         assert "api_timeout" in settings_dict
 
         # Step 6: Save to file
@@ -312,7 +313,9 @@ class TestUserStory3Integration:
         # Step 8: Verify loaded settings match original
         assert loaded_settings.output_folder == settings.output_folder
         assert loaded_settings.comfyui_endpoint == settings.comfyui_endpoint
-        assert loaded_settings.workflow_json_path == settings.workflow_json_path
+        assert len(loaded_settings.workflow_configs) == 4
+        assert loaded_settings.workflow_configs[0].name == settings.workflow_configs[0].name
+        assert loaded_settings.workflow_configs[0].path == settings.workflow_configs[0].path
         assert loaded_settings.api_timeout == settings.api_timeout
 
         # Step 9: Verify loaded settings are valid
@@ -323,9 +326,9 @@ class TestUserStory3Integration:
         test_image.write_bytes(b"fake_image_data")
 
         # Step 11: Verify loaded settings can create ComfyUIWorkflow
-        workflow = ComfyUIWorkflow(
+        workflow_obj = ComfyUIWorkflow(
             workflow_json=workflow,
             input_image_path=str(test_image),
             output_location=str(output_folder),
         )
-        assert workflow.validate() is True
+        assert workflow_obj.validate() is True
