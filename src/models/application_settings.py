@@ -40,7 +40,7 @@ class ApplicationSettings:
     Attributes:
         output_folder: Directory where captured images are saved
         comfyui_endpoint: ComfyUI API endpoint URL (optional, set to None to disable ComfyUI)
-        workflow_configs: List of 6 workflow configurations (name + path pairs)
+        workflow_configs: List of 8 workflow configurations (name + path pairs)
         art_styles: List of 5 art style configurations (name + path pairs)
         api_timeout: Timeout in seconds for API requests (default: 30)
         enable_comfyui: Whether ComfyUI integration is enabled (default: True)
@@ -50,14 +50,7 @@ class ApplicationSettings:
     output_folder: str
     comfyui_endpoint: str
     workflow_configs: list[WorkflowConfig] = field(
-        default_factory=lambda: [
-            WorkflowConfig(name="", path=""),
-            WorkflowConfig(name="", path=""),
-            WorkflowConfig(name="", path=""),
-            WorkflowConfig(name="", path=""),
-            WorkflowConfig(name="", path=""),
-            WorkflowConfig(name="", path=""),
-        ]
+        default_factory=lambda: [WorkflowConfig(name="", path="") for _ in range(8)]
     )
     art_styles: list[ArtStyleConfig] = field(
         default_factory=lambda: [
@@ -76,9 +69,9 @@ class ApplicationSettings:
 
     def __post_init__(self) -> None:
         """Validate the application settings after initialization."""
-        # Ensure workflow_configs has exactly 6 entries
-        if len(self.workflow_configs) < 6:
-            while len(self.workflow_configs) < 6:
+        # Ensure workflow_configs has exactly 8 entries
+        if len(self.workflow_configs) < 8:
+            while len(self.workflow_configs) < 8:
                 self.workflow_configs.append(WorkflowConfig(name="", path=""))
         # Ensure art_styles has exactly 5 entries
         if len(self.art_styles) < 5:
@@ -232,28 +225,11 @@ class ApplicationSettings:
         """
         # Handle old format with workflow_json_path (single path string)
         if "workflow_json_path" in data:
-            workflow_configs_data = [
-                {"name": "Workflow 1", "path": data["workflow_json_path"]},
-                {"name": "", "path": ""},
-                {"name": "", "path": ""},
-                {"name": "", "path": ""},
-                {"name": "", "path": ""},
-                {"name": "", "path": ""},
-            ]
+            workflow_configs_data = [{"name": "Workflow 1", "path": data["workflow_json_path"]}]
         else:
-            workflow_configs_data = data.get(
-                "workflow_configs",
-                [
-                    {"name": "", "path": ""},
-                    {"name": "", "path": ""},
-                    {"name": "", "path": ""},
-                    {"name": "", "path": ""},
-                    {"name": "", "path": ""},
-                    {"name": "", "path": ""},
-                ],
-            )
-        # Ensure exactly 6 workflow configs (pad if loading an older settings file)
-        while len(workflow_configs_data) < 6:
+            workflow_configs_data = data.get("workflow_configs", [])
+        # Pad to exactly 8 slots (handles older settings files with fewer entries)
+        while len(workflow_configs_data) < 8:
             workflow_configs_data.append({"name": "", "path": ""})
         workflow_configs = [
             WorkflowConfig(name=c["name"], path=c["path"])
