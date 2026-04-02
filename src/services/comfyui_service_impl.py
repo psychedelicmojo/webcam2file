@@ -305,6 +305,12 @@ class ComfyUIService(IComfyUIService):
                         subfolder = image_info.get("subfolder", "")
                         image_type = image_info.get("type", "output")
 
+                        # Skip temp images — these are PreviewImage node outputs,
+                        # not the final SaveImage output. Downloading both causes
+                        # duplicate files with identical content.
+                        if image_type == "temp":
+                            continue
+
                         # Build the URL to download the image
                         # ComfyUI /view endpoint supports: /view?filename=...&subfolder=...&type=...
                         params: Dict[str, str] = {
