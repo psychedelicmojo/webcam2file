@@ -51,21 +51,24 @@ class WebcamServiceImpl(IWebcamService):
             # Check if webcam opened successfully
             if not self._cap.isOpened():
                 error_msg = f"Failed to open webcam at index {self._webcam_index}. "
-                
+
                 # Check if we're in WSL and provide helpful message
                 import platform
                 import sys
-                if sys.platform.startswith("linux") and "microsoft" in platform.release().lower():
+
+                if (
+                    sys.platform.startswith("linux")
+                    and "microsoft" in platform.release().lower()
+                ):
                     error_msg += (
                         "WSL detected. OpenCV in WSL cannot access webcams directly. "
-                        "Please run this application on Windows natively, or use WSLg with proper "
-                        "X11 forwarding configured for GUI applications."
+                        "Please run this application on Windows natively (using PowerShell or CMD), "
+                        "not from WSL terminal. "
+                        "Example: cd 'C:\\Users\\datom\\Software Development\\webcam2file' && python main.py"
                     )
                 else:
-                    error_msg += (
-                        "Please connect a webcam and ensure no other application is using it."
-                    )
-                
+                    error_msg += "Please connect a webcam and ensure no other application is using it."
+
                 raise WebcamNotFoundError(error_msg)
 
             # Set HD resolution

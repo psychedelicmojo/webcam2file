@@ -264,9 +264,7 @@ class ComfyUIService(IComfyUIService):
             f"Workflow {prompt_id} did not complete within {max_timeout} seconds."
         )
 
-    def download_outputs(
-        self, prompt_id: str, output_folder: str
-    ) -> List[str]:
+    def download_outputs(self, prompt_id: str, output_folder: str) -> List[str]:
         """Download processed images from ComfyUI after workflow completion.
 
         Args:
@@ -387,4 +385,3 @@ class ComfyUIService(IComfyUIService):
             timeout: Request timeout in seconds.
         """
         self._timeout = timeout
-

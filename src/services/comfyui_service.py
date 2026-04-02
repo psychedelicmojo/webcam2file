@@ -136,9 +136,7 @@ class IComfyUIService(ABC):
         pass
 
     @abstractmethod
-    def download_outputs(
-        self, prompt_id: str, output_folder: str
-    ) -> List[str]:
+    def download_outputs(self, prompt_id: str, output_folder: str) -> List[str]:
         """Download processed images from ComfyUI after workflow completion.
 
         Args:

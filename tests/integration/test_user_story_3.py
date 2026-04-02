@@ -41,8 +41,14 @@ class TestUserStory3Integration:
         assert loaded_settings.output_folder == original_settings.output_folder
         assert loaded_settings.comfyui_endpoint == original_settings.comfyui_endpoint
         assert len(loaded_settings.workflow_configs) == 4
-        assert loaded_settings.workflow_configs[0].name == original_settings.workflow_configs[0].name
-        assert loaded_settings.workflow_configs[0].path == original_settings.workflow_configs[0].path
+        assert (
+            loaded_settings.workflow_configs[0].name
+            == original_settings.workflow_configs[0].name
+        )
+        assert (
+            loaded_settings.workflow_configs[0].path
+            == original_settings.workflow_configs[0].path
+        )
         assert loaded_settings.api_timeout == original_settings.api_timeout
 
         # Verify loaded settings are valid (can be used immediately)
@@ -116,7 +122,9 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="invalid-endpoint",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
     def test_workflow_validation_success(self, tmp_path):
@@ -175,7 +183,12 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(tmp_path / "non_existent_workflow.json"))],
+                workflow_configs=[
+                    WorkflowConfig(
+                        name="Style 1",
+                        path=str(tmp_path / "non_existent_workflow.json"),
+                    )
+                ],
             )
 
         # Verify error message
@@ -210,7 +223,9 @@ class TestUserStory3Integration:
             ApplicationSettings(
                 output_folder=str(non_existent),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(tmp_path / "workflow.json"))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(tmp_path / "workflow.json"))
+                ],
             )
         assert "Output folder does not exist" in str(exc_info.value)
 
@@ -244,7 +259,9 @@ class TestUserStory3Integration:
             settings = ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
                 api_timeout=timeout,
             )
             assert settings.validate() is True
@@ -256,7 +273,9 @@ class TestUserStory3Integration:
                 ApplicationSettings(
                     output_folder=str(output_folder),
                     comfyui_endpoint="http://127.0.0.1:8188",
-                    workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                    workflow_configs=[
+                        WorkflowConfig(name="Style 1", path=str(workflow_file))
+                    ],
                     api_timeout=invalid_timeout,
                 )
             assert "Invalid api_timeout" in str(exc_info.value)
@@ -314,8 +333,14 @@ class TestUserStory3Integration:
         assert loaded_settings.output_folder == settings.output_folder
         assert loaded_settings.comfyui_endpoint == settings.comfyui_endpoint
         assert len(loaded_settings.workflow_configs) == 4
-        assert loaded_settings.workflow_configs[0].name == settings.workflow_configs[0].name
-        assert loaded_settings.workflow_configs[0].path == settings.workflow_configs[0].path
+        assert (
+            loaded_settings.workflow_configs[0].name
+            == settings.workflow_configs[0].name
+        )
+        assert (
+            loaded_settings.workflow_configs[0].path
+            == settings.workflow_configs[0].path
+        )
         assert loaded_settings.api_timeout == settings.api_timeout
 
         # Step 9: Verify loaded settings are valid

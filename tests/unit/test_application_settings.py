@@ -4,7 +4,11 @@ import json
 
 import pytest
 
-from src.models.application_settings import ApplicationSettings, WorkflowConfig, ArtStyleConfig
+from src.models.application_settings import (
+    ApplicationSettings,
+    ArtStyleConfig,
+    WorkflowConfig,
+)
 
 
 class TestApplicationSettingsUnit:
@@ -86,7 +90,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(non_existent_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
         # Verify error message
@@ -107,7 +113,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(not_a_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
         # Verify error message
@@ -128,7 +136,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="invalid-url",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
         # Verify error message
@@ -149,7 +159,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
         # Verify error message
@@ -170,7 +182,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="ftp://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
             )
 
         # Verify error message
@@ -187,7 +201,12 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(tmp_path / "non_existent_workflow.json"))],
+                workflow_configs=[
+                    WorkflowConfig(
+                        name="Style 1",
+                        path=str(tmp_path / "non_existent_workflow.json"),
+                    )
+                ],
             )
 
         # Verify error message
@@ -229,7 +248,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
                 api_timeout=0,
             )
 
@@ -251,7 +272,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
                 api_timeout=-5,
             )
 
@@ -273,7 +296,9 @@ class TestApplicationSettingsUnit:
             ApplicationSettings(
                 output_folder=str(output_folder),
                 comfyui_endpoint="http://127.0.0.1:8188",
-                workflow_configs=[WorkflowConfig(name="Style 1", path=str(workflow_file))],
+                workflow_configs=[
+                    WorkflowConfig(name="Style 1", path=str(workflow_file))
+                ],
                 api_timeout=30.5,
             )
 
@@ -502,8 +527,14 @@ class TestApplicationSettingsUnit:
         assert loaded_settings.output_folder == original_settings.output_folder
         assert loaded_settings.comfyui_endpoint == original_settings.comfyui_endpoint
         assert len(loaded_settings.workflow_configs) == 4
-        assert loaded_settings.workflow_configs[0].name == original_settings.workflow_configs[0].name
-        assert loaded_settings.workflow_configs[0].path == original_settings.workflow_configs[0].path
+        assert (
+            loaded_settings.workflow_configs[0].name
+            == original_settings.workflow_configs[0].name
+        )
+        assert (
+            loaded_settings.workflow_configs[0].path
+            == original_settings.workflow_configs[0].path
+        )
         assert loaded_settings.api_timeout == original_settings.api_timeout
         assert loaded_settings.art_styles == original_settings.art_styles
 

@@ -111,24 +111,32 @@ class SettingsDialog:
             )
             name_var = tk.StringVar()
             self._workflow_name_vars.append(name_var)
-            name_entry = ttk.Entry(
-                main_frame, textvariable=name_var, width=50
+            name_entry = ttk.Entry(main_frame, textvariable=name_var, width=50)
+            name_entry.grid(
+                row=workflow_start_row + i * 2, column=1, sticky="ew", pady=2, padx=5
             )
-            name_entry.grid(row=workflow_start_row + i * 2, column=1, sticky="ew", pady=2, padx=5)
 
             ttk.Label(main_frame, text=f"Workflow {i + 1} JSON:").grid(
                 row=workflow_start_row + i * 2 + 1, column=0, sticky="w", pady=2
             )
             path_var = tk.StringVar()
             self._workflow_path_vars.append(path_var)
-            path_entry = ttk.Entry(
-                main_frame, textvariable=path_var, width=50
+            path_entry = ttk.Entry(main_frame, textvariable=path_var, width=50)
+            path_entry.grid(
+                row=workflow_start_row + i * 2 + 1,
+                column=1,
+                sticky="ew",
+                pady=2,
+                padx=5,
             )
-            path_entry.grid(row=workflow_start_row + i * 2 + 1, column=1, sticky="ew", pady=2, padx=5)
             browse_button = ttk.Button(
-                main_frame, text="Browse...", command=lambda idx=i: self._browse_workflow_json(idx)
+                main_frame,
+                text="Browse...",
+                command=lambda idx=i: self._browse_workflow_json(idx),
             )
-            browse_button.grid(row=workflow_start_row + i * 2 + 1, column=2, pady=2, padx=5)
+            browse_button.grid(
+                row=workflow_start_row + i * 2 + 1, column=2, pady=2, padx=5
+            )
 
         # Email address section (placed after workflow selection)
         ttk.Label(main_frame, text="Email Address:").grid(
@@ -193,8 +201,12 @@ class SettingsDialog:
                 # Set default workflow configs
                 for i in range(4):
                     if i < len(self._workflow_path_vars):
-                        self._workflow_path_vars[i].set(defaults.get(f"workflow_{i}_path", ""))
-                        self._workflow_name_vars[i].set(defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}"))
+                        self._workflow_path_vars[i].set(
+                            defaults.get(f"workflow_{i}_path", "")
+                        )
+                        self._workflow_name_vars[i].set(
+                            defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
+                        )
                 self._email_address_var.set(defaults.get("email_address", ""))
                 self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
         except Exception:
@@ -207,8 +219,12 @@ class SettingsDialog:
             # Set default workflow configs
             for i in range(4):
                 if i < len(self._workflow_path_vars):
-                    self._workflow_path_vars[i].set(defaults.get(f"workflow_{i}_path", ""))
-                    self._workflow_name_vars[i].set(defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}"))
+                    self._workflow_path_vars[i].set(
+                        defaults.get(f"workflow_{i}_path", "")
+                    )
+                    self._workflow_name_vars[i].set(
+                        defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
+                    )
             self._email_address_var.set(defaults.get("email_address", ""))
             self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
 
@@ -287,7 +303,9 @@ class SettingsDialog:
         # At least one workflow must have a path
         has_workflow = any(var.get().strip() for var in self._workflow_path_vars)
         if not has_workflow:
-            messagebox.showerror("Error", "Please select at least one workflow JSON file")
+            messagebox.showerror(
+                "Error", "Please select at least one workflow JSON file"
+            )
             return False
 
         # Validate API timeout
@@ -317,6 +335,7 @@ class SettingsDialog:
 
             # Create settings object
             from src.models.application_settings import WorkflowConfig
+
             settings = ApplicationSettings(
                 output_folder=self._output_folder_var.get().strip(),
                 comfyui_endpoint=self._comfyui_endpoint_var.get().strip(),

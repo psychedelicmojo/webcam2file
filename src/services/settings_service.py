@@ -26,25 +26,46 @@ class SettingsService:
     DEFAULT_SETTINGS = {
         "output_folder": "captures",
         "comfyui_endpoint": "http://127.0.0.1:8188",
-        "workflow_json_path": "workflow.json",
+        "workflow_configs": [
+            {"name": "Workflow 1", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+        ],
+        "art_styles": [
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+            {"name": "", "path": ""},
+        ],
         "api_timeout": 30,
-        "art_styles": ["", "", "", "", ""],
     }
 
     def __init__(
         self,
         settings_file: Optional[str] = None,
         error_manager: Optional[ErrorManager] = None,
+        auto_load: bool = True,
     ):
         """Initialize the settings service.
 
         Args:
             settings_file: Path to the settings JSON file (default: settings.json)
             error_manager: Error manager for user-friendly error handling
+            auto_load: If True, automatically load settings from file on init
         """
         self._settings_file = settings_file or self.DEFAULT_SETTINGS_FILE
         self._error_manager = error_manager or ErrorManager()
         self._current_settings: Optional[ApplicationSettings] = None
+
+        # Auto-load settings if file exists and auto_load is enabled
+        if auto_load and Path(self._settings_file).exists():
+            try:
+                self.load_settings()
+            except (FileNotFoundError, ValueError, json.JSONDecodeError):
+                # If loading fails, start with empty settings
+                pass
 
     def load_settings(self) -> ApplicationSettings:
         """Load settings from the settings file.

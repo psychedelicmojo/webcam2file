@@ -49,19 +49,23 @@ class ApplicationSettings:
 
     output_folder: str
     comfyui_endpoint: str
-    workflow_configs: list[WorkflowConfig] = field(default_factory=lambda: [
-        WorkflowConfig(name="", path=""),
-        WorkflowConfig(name="", path=""),
-        WorkflowConfig(name="", path=""),
-        WorkflowConfig(name="", path=""),
-    ])
-    art_styles: list[ArtStyleConfig] = field(default_factory=lambda: [
-        ArtStyleConfig(name="", path=""),
-        ArtStyleConfig(name="", path=""),
-        ArtStyleConfig(name="", path=""),
-        ArtStyleConfig(name="", path=""),
-        ArtStyleConfig(name="", path=""),
-    ])
+    workflow_configs: list[WorkflowConfig] = field(
+        default_factory=lambda: [
+            WorkflowConfig(name="", path=""),
+            WorkflowConfig(name="", path=""),
+            WorkflowConfig(name="", path=""),
+            WorkflowConfig(name="", path=""),
+        ]
+    )
+    art_styles: list[ArtStyleConfig] = field(
+        default_factory=lambda: [
+            ArtStyleConfig(name="", path=""),
+            ArtStyleConfig(name="", path=""),
+            ArtStyleConfig(name="", path=""),
+            ArtStyleConfig(name="", path=""),
+            ArtStyleConfig(name="", path=""),
+        ]
+    )
     api_timeout: int = 30
     enable_comfyui: bool = True
     email_address: str = ""
@@ -245,8 +249,7 @@ class ApplicationSettings:
         while len(art_styles_data) < 5:
             art_styles_data.append({"name": "", "path": ""})
         art_styles = [
-            ArtStyleConfig(name=c["name"], path=c["path"])
-            for c in art_styles_data
+            ArtStyleConfig(name=c["name"], path=c["path"]) for c in art_styles_data
         ]
         return cls(
             output_folder=data["output_folder"],

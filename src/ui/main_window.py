@@ -7,7 +7,7 @@ from tkinter import messagebox, ttk
 from typing import Optional
 
 import cv2
-from PIL import Image, ImageTk
+from PIL import ImageTk
 
 from src.lib.error_manager import ErrorManager
 from src.services.capture_service import CaptureService
@@ -83,10 +83,10 @@ class MainWindow:
         # Video label for displaying frames
         self._video_label = ttk.Label(self._video_frame)
         self._video_label.grid(row=0, column=0, sticky="nsew")
-        
+
         # Placeholder for the current photo image (created later when window is visible)
         self._current_photo = None
-        
+
         # Video display settings
         self._display_width = 1280
         self._display_height = 720
@@ -96,29 +96,28 @@ class MainWindow:
         self._sidebar_frame.grid(row=0, column=1, sticky="ns", padx=(10, 0))
         self._sidebar_frame.rowconfigure(0, weight=1)
 
-        # Style selection section
-        style_frame = ttk.LabelFrame(self._sidebar_frame, text="Style Selection", padding="5")
-        style_frame.grid(row=0, column=0, sticky="nsew")
-
-        # Style dropdown
-        self._style_var = tk.StringVar()
-        self._style_dropdown = ttk.Combobox(
-            style_frame,
-            textvariable=self._style_var,
-            state="readonly",
-            width=30
+        # Workflow selection section
+        workflow_frame = ttk.LabelFrame(
+            self._sidebar_frame, text="Workflow Selection", padding="5"
         )
-        self._style_dropdown.grid(row=0, column=0, sticky="ew", pady=5)
-        self._style_dropdown.bind("<<ComboboxSelected>>", self._on_style_change)
+        workflow_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Style info label
-        self._style_info_label = ttk.Label(
-            style_frame,
-            text="Select an art style to apply",
+        # Workflow dropdown
+        self._workflow_var = tk.StringVar()
+        self._workflow_dropdown = ttk.Combobox(
+            workflow_frame, textvariable=self._workflow_var, state="readonly", width=30
+        )
+        self._workflow_dropdown.grid(row=0, column=0, sticky="ew", pady=5)
+        self._workflow_dropdown.bind("<<ComboboxSelected>>", self._on_workflow_change)
+
+        # Workflow info label
+        self._workflow_info_label = ttk.Label(
+            workflow_frame,
+            text="Select a workflow to apply",
             wraplength=200,
-            foreground="gray"
+            foreground="gray",
         )
-        self._style_info_label.grid(row=1, column=0, sticky="ew", pady=(5, 0))
+        self._workflow_info_label.grid(row=1, column=0, sticky="ew", pady=(5, 0))
 
         # Status frame
         self._status_frame = ttk.Frame(self._main_frame, padding="5")
@@ -301,11 +300,12 @@ class MainWindow:
         if self._orchestrator:
             self._orchestrator.update_settings(settings)
 
-        # Update style dropdown with loaded styles
-        if hasattr(settings, 'art_styles') and settings.art_styles:
-            self._style_dropdown['values'] = settings.art_styles
-            if settings.art_styles:
-                self._style_var.set(settings.art_styles[0])
+        # Update workflow dropdown with loaded workflows
+        if hasattr(settings, "workflow_configs") and settings.workflow_configs:
+            workflow_names = [w.name for w in settings.workflow_configs if w.name]
+            self._workflow_dropdown["values"] = workflow_names
+            if workflow_names:
+                self._workflow_var.set(workflow_names[0])
 
         # Update status label
         self._status_label.config(
@@ -313,22 +313,25 @@ class MainWindow:
             foreground="green",
         )
 
-    def _on_style_change(self, event=None) -> None:
-        """Handle style selection change.
+    def _on_workflow_change(self, event=None) -> None:
+        """Handle workflow selection change.
 
         Args:
             event: The event object (optional)
         """
-        selected_style = self._style_var.get().strip()
-        if selected_style:
+        selected_workflow = self._workflow_var.get().strip()
+        if selected_workflow:
             self._status_label.config(
-                text=f"Status: Style selected - {selected_style}",
+                text=f"Status: Workflow selected - {selected_workflow}",
                 foreground="blue",
             )
             # Clear status after 3 seconds
-            self._root.after(3000, lambda: self._status_label.config(
-                text=f"Status: Ready", foreground="green"
-            ))
+            self._root.after(
+                3000,
+                lambda: self._status_label.config(
+                    text="Status: Ready", foreground="green"
+                ),
+            )
 
     def _on_quit(self) -> None:
         """Handle quit button press."""
@@ -363,7 +366,7 @@ class MainWindow:
                 # cv2.imdecode expects a numpy array, not bytes
                 frame_array = np.frombuffer(frame_data, dtype=np.uint8)
                 frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
-              
+
                 if frame is None:
                     logger.error("Failed to decode frame")
                     self._schedule_next_frame()
@@ -374,15 +377,23 @@ class MainWindow:
 
                 # Get original frame dimensions
                 original_height, original_width = frame.shape[:2]
-                
+
                 # Calculate display area size (accounting for padding)
-                display_width = self._video_frame.winfo_width() - 20 if self._video_frame.winfo_width() > 1 else self._display_width
-                display_height = self._video_frame.winfo_height() - 60 if self._video_frame.winfo_height() > 1 else self._display_height
-                
+                display_width = (
+                    self._video_frame.winfo_width() - 20
+                    if self._video_frame.winfo_width() > 1
+                    else self._display_width
+                )
+                display_height = (
+                    self._video_frame.winfo_height() - 60
+                    if self._video_frame.winfo_height() > 1
+                    else self._display_height
+                )
+
                 # Calculate aspect ratio
                 frame_aspect = original_width / original_height
                 display_aspect = display_width / display_height
-                
+
                 # Determine scaled dimensions while maintaining aspect ratio
                 if frame_aspect > display_aspect:
                     # Width is the limiting factor
@@ -392,14 +403,16 @@ class MainWindow:
                     # Height is the limiting factor
                     scaled_height = display_height
                     scaled_width = int(display_height * frame_aspect)
-                
+
                 # Ensure minimum display size
                 scaled_width = max(320, scaled_width)
                 scaled_height = max(240, scaled_height)
 
                 # Resize frame to fit display area
                 pil_image = Image.fromarray(frame)
-                resized_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+                resized_image = pil_image.resize(
+                    (scaled_width, scaled_height), Image.Resampling.LANCZOS
+                )
 
                 # Convert to PhotoImage
                 photo = ImageTk.PhotoImage(image=resized_image)
@@ -417,6 +430,7 @@ class MainWindow:
             # Log error but continue trying
             logger.error(f"Video feed update error: {e}")
             import traceback
+
             logger.error(f"Video feed traceback: {traceback.format_exc()}")
 
         # Schedule next frame update
@@ -477,11 +491,11 @@ class MainWindow:
 
             # Start main loop first
             self._running = True
-        
+
             # Schedule video feed update after window is visible
             # Use after_idle to ensure all pending events are processed first
             self._root.after_idle(self._update_video_feed)
-            
+
             # Start main loop
             self._root.mainloop()
 
@@ -501,6 +515,7 @@ class MainWindow:
                 logger.debug(f"Video feed loop error: {e}")
             # Sleep to avoid busy-waiting
             import time
+
             time.sleep(0.033)  # ~30 FPS
 
     def stop(self) -> None:

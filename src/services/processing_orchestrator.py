@@ -251,8 +251,15 @@ class ProcessingOrchestrator:
         self._capture_queue.set_current_image(filepath)
         self._update_status()
 
-        # Load workflow JSON from file
-        workflow_path = Path(self._settings.workflow_json_path)
+        # Load workflow JSON from first configured workflow
+        if (
+            not self._settings.workflow_configs
+            or not self._settings.workflow_configs[0].path
+        ):
+            raise APIError(
+                "No workflow JSON file configured. Please configure a workflow in settings."
+            )
+        workflow_path = Path(self._settings.workflow_configs[0].path)
         try:
             with open(workflow_path, "r") as f:
                 workflow_json = json.load(f)
@@ -368,7 +375,9 @@ class ProcessingOrchestrator:
                 if isinstance(inputs, dict):
                     inputs["image"] = uploaded_filename
                     node_data["inputs"] = inputs
-                    logger.debug(f"Updated LoadImage node {node_id} with image: {uploaded_filename}")
+                    logger.debug(
+                        f"Updated LoadImage node {node_id} with image: {uploaded_filename}"
+                    )
                     load_image_found = True
 
             elif class_type == "KSampler":
@@ -379,7 +388,9 @@ class ProcessingOrchestrator:
                     random_seed = random.randint(0, 2**64 - 1)
                     inputs["seed"] = random_seed
                     node_data["inputs"] = inputs
-                    logger.debug(f"Randomized KSampler node {node_id} seed to: {random_seed}")
+                    logger.debug(
+                        f"Randomized KSampler node {node_id} seed to: {random_seed}"
+                    )
 
         if not load_image_found:
             raise APIError(
