@@ -3,15 +3,17 @@
 import logging
 import threading
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Optional
 
 import cv2
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 from src.lib.error_manager import ErrorManager
 from src.services.capture_service import CaptureService
 from src.services.comfyui_service import IComfyUIService
+from src.services.email_service import IEmailService
 from src.services.file_monitor_service import IFileMonitorService
 from src.services.processing_orchestrator import ProcessingOrchestrator
 from src.services.settings_service import SettingsService
@@ -37,6 +39,8 @@ class MainWindow:
         file_monitor_service: Optional[IFileMonitorService] = None,
         comfyui_service: Optional[IComfyUIService] = None,
         orchestrator: Optional[ProcessingOrchestrator] = None,
+        email_service: Optional[IEmailService] = None,
+        initial_email: str = "",
     ):
         """Initialize the main window.
 
@@ -54,8 +58,14 @@ class MainWindow:
         self._file_monitor_service = file_monitor_service
         self._comfyui_service = comfyui_service
         self._orchestrator = orchestrator
+        self._email_service = email_service
         self._error_manager = ErrorManager()
         self._selected_workflow_name: Optional[str] = None
+
+        # Preview state
+        self._preview_images: list = []
+        self._preview_index: int = 0
+        self._current_preview_photo = None
 
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
@@ -155,6 +165,56 @@ class MainWindow:
         # Feedback indicator
         self._feedback_label = ttk.Label(self._status_frame, text="", foreground="blue")
         self._feedback_label.grid(row=0, column=1, padx=10)
+
+        # Preview frame — shows Creative_School_AI_Photobooth images
+        self._preview_frame = ttk.LabelFrame(
+            self._main_frame,
+            text="Creative School AI Photobooth — Preview",
+            padding="5",
+        )
+        self._preview_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        self._preview_frame.columnconfigure(1, weight=1)
+
+        self._prev_button = ttk.Button(
+            self._preview_frame, text="< Prev", command=self._on_prev_image, width=8
+        )
+        self._prev_button.grid(row=0, column=0, padx=5, pady=5)
+
+        self._preview_image_label = ttk.Label(
+            self._preview_frame, text="No images found", anchor="center"
+        )
+        self._preview_image_label.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+
+        self._next_button = ttk.Button(
+            self._preview_frame, text="Next >", command=self._on_next_image, width=8
+        )
+        self._next_button.grid(row=0, column=2, padx=5, pady=5)
+
+        self._preview_counter_label = ttk.Label(
+            self._preview_frame, text="", foreground="gray", anchor="center"
+        )
+        self._preview_counter_label.grid(row=1, column=0, columnspan=3, pady=(0, 5))
+
+        # Email frame
+        self._email_frame = ttk.LabelFrame(
+            self._main_frame, text="Send via Email", padding="5"
+        )
+        self._email_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=5)
+
+        ttk.Label(self._email_frame, text="Email:").pack(side="left", padx=(0, 5))
+        self._email_var = tk.StringVar(value=initial_email)
+        self._email_entry = ttk.Entry(self._email_frame, textvariable=self._email_var, width=40)
+        self._email_entry.pack(side="left", padx=5)
+
+        self._send_email_button = ttk.Button(
+            self._email_frame, text="Send Email", command=self._on_send_email
+        )
+        self._send_email_button.pack(side="left", padx=5)
+
+        self._email_status_label = ttk.Label(
+            self._email_frame, text="", foreground="gray"
+        )
+        self._email_status_label.pack(side="left", padx=10)
 
         # Video capture thread
         self._video_thread: Optional[threading.Thread] = None
@@ -311,6 +371,12 @@ class MainWindow:
                 if self._orchestrator:
                     self._orchestrator.set_selected_workflow(workflow_names[0])
 
+        # Update email service URL and pre-fill email field
+        if self._email_service and hasattr(settings, "apps_script_url"):
+            self._email_service.set_url(settings.apps_script_url)
+        if hasattr(settings, "email_address") and settings.email_address:
+            self._email_var.set(settings.email_address)
+
         # Update status label
         self._status_label.config(
             text=f"Status: Settings applied - {settings.output_folder}",
@@ -340,6 +406,141 @@ class MainWindow:
                     text="Status: Ready", foreground="green"
                 ),
             )
+
+    # ------------------------------------------------------------------
+    # Preview panel
+    # ------------------------------------------------------------------
+
+    _PREVIEW_IMAGE_PREFIX = "Creative_School_AI_Photobooth"
+    _PREVIEW_MAX_SIZE = (640, 400)
+    _PREVIEW_POLL_MS = 2000
+
+    def _refresh_preview_list(self) -> None:
+        """Scan the output folder for Creative_School_AI_Photobooth images."""
+        folder = Path(self._capture_service._output_folder)
+        if folder.exists():
+            matches = []
+            for ext in ("*.jpg", "*.jpeg", "*.png"):
+                matches.extend(folder.glob(f"{self._PREVIEW_IMAGE_PREFIX}{ext}"))
+            matches.sort(key=lambda p: p.stat().st_mtime)
+            new_list = [str(p) for p in matches]
+        else:
+            new_list = []
+
+        if new_list != self._preview_images:
+            new_image_arrived = len(new_list) > len(self._preview_images)
+            self._preview_images = new_list
+            if new_image_arrived:
+                # Auto-advance to the newest image
+                self._preview_index = max(0, len(self._preview_images) - 1)
+            elif self._preview_index >= len(self._preview_images):
+                self._preview_index = max(0, len(self._preview_images) - 1)
+            self._show_preview_image()
+
+        if self._running:
+            self._root.after(self._PREVIEW_POLL_MS, self._refresh_preview_list)
+
+    def _show_preview_image(self) -> None:
+        """Render the currently selected preview image."""
+        if not self._preview_images:
+            self._preview_image_label.config(image="", text="No images found")
+            self._preview_counter_label.config(text="")
+            self._current_preview_photo = None
+            self._prev_button.config(state=tk.DISABLED)
+            self._next_button.config(state=tk.DISABLED)
+            return
+
+        path = self._preview_images[self._preview_index]
+        total = len(self._preview_images)
+        current = self._preview_index + 1
+        self._preview_counter_label.config(
+            text=f"{Path(path).name}  ({current} of {total})"
+        )
+
+        try:
+            img = Image.open(path)
+            img.thumbnail(self._PREVIEW_MAX_SIZE, Image.Resampling.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            self._preview_image_label.config(image=photo, text="")
+            self._current_preview_photo = photo  # keep reference
+        except Exception as e:
+            logger.error(f"Failed to load preview image {path}: {e}")
+            self._preview_image_label.config(image="", text="Cannot load image")
+            self._current_preview_photo = None
+
+        self._prev_button.config(
+            state=tk.NORMAL if self._preview_index > 0 else tk.DISABLED
+        )
+        self._next_button.config(
+            state=tk.NORMAL if self._preview_index < total - 1 else tk.DISABLED
+        )
+
+    def _on_prev_image(self) -> None:
+        """Navigate to the previous preview image."""
+        if self._preview_index > 0:
+            self._preview_index -= 1
+            self._show_preview_image()
+
+    def _on_next_image(self) -> None:
+        """Navigate to the next preview image."""
+        if self._preview_index < len(self._preview_images) - 1:
+            self._preview_index += 1
+            self._show_preview_image()
+
+    # ------------------------------------------------------------------
+    # Email sending
+    # ------------------------------------------------------------------
+
+    def _on_send_email(self) -> None:
+        """Send the currently displayed preview image via email."""
+        if not self._preview_images:
+            messagebox.showwarning("No Image", "No image is available to send.")
+            return
+
+        email = self._email_var.get().strip()
+        if not email:
+            messagebox.showwarning("No Email", "Please enter a recipient email address.")
+            return
+
+        if not self._email_service:
+            messagebox.showerror(
+                "Not Configured",
+                "Email service is not configured.\n"
+                "Please add the Apps Script URL in Settings.",
+            )
+            return
+
+        image_path = self._preview_images[self._preview_index]
+        self._send_email_button.config(state=tk.DISABLED)
+        self._email_status_label.config(text="Sending...", foreground="orange")
+
+        def _send():
+            try:
+                self._email_service.send_image(image_path, email)
+                self._root.after(
+                    0,
+                    lambda: self._email_status_label.config(
+                        text="Sent!", foreground="green"
+                    ),
+                )
+                self._root.after(
+                    4000,
+                    lambda: self._email_status_label.config(text="", foreground="gray"),
+                )
+            except Exception as exc:
+                msg = str(exc)
+                self._root.after(
+                    0,
+                    lambda: self._email_status_label.config(
+                        text=f"Error: {msg[:60]}", foreground="red"
+                    ),
+                )
+            finally:
+                self._root.after(
+                    0, lambda: self._send_email_button.config(state=tk.NORMAL)
+                )
+
+        threading.Thread(target=_send, daemon=True).start()
 
     def _on_quit(self) -> None:
         """Handle quit button press."""
@@ -503,6 +704,7 @@ class MainWindow:
             # Schedule video feed update after window is visible
             # Use after_idle to ensure all pending events are processed first
             self._root.after_idle(self._update_video_feed)
+            self._root.after_idle(self._refresh_preview_list)
 
             # Start main loop
             self._root.mainloop()

@@ -147,23 +147,38 @@ class SettingsDialog:
         )
         self._email_address_entry.grid(row=10, column=1, sticky="ew", pady=5, padx=5)
 
-        # API timeout section (placed after email address)
-        ttk.Label(main_frame, text="API Timeout (seconds):").grid(
+        # Apps Script URL section
+        ttk.Label(main_frame, text="Apps Script URL:").grid(
             row=11, column=0, sticky="w", pady=5
+        )
+        self._apps_script_url_var = tk.StringVar()
+        self._apps_script_url_entry = ttk.Entry(
+            main_frame, textvariable=self._apps_script_url_var, width=50
+        )
+        self._apps_script_url_entry.grid(row=11, column=1, sticky="ew", pady=5, padx=5)
+        ttk.Label(
+            main_frame,
+            text="Google Apps Script web app URL for email sending",
+            foreground="gray",
+        ).grid(row=11, column=2, sticky="w", padx=5)
+
+        # API timeout section
+        ttk.Label(main_frame, text="API Timeout (seconds):").grid(
+            row=12, column=0, sticky="w", pady=5
         )
         self._api_timeout_var = tk.StringVar(value="30")
         self._api_timeout_entry = ttk.Entry(
             main_frame, textvariable=self._api_timeout_var, width=10
         )
-        self._api_timeout_entry.grid(row=11, column=1, sticky="w", pady=5, padx=5)
+        self._api_timeout_entry.grid(row=12, column=1, sticky="w", pady=5, padx=5)
 
         # Status label
         self._status_label = ttk.Label(main_frame, text="", foreground="blue")
-        self._status_label.grid(row=12, column=0, columnspan=3, pady=10)
+        self._status_label.grid(row=13, column=0, columnspan=3, pady=10)
 
         # Buttons frame
         buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.grid(row=13, column=0, columnspan=3, pady=10)
+        buttons_frame.grid(row=14, column=0, columnspan=3, pady=10)
 
         # Save button
         self._save_button = ttk.Button(
@@ -190,6 +205,7 @@ class SettingsDialog:
                         self._workflow_name_vars[i].set(config.name)
                         self._workflow_path_vars[i].set(config.path)
                 self._email_address_var.set(settings.email_address)
+                self._apps_script_url_var.set(settings.apps_script_url)
                 self._api_timeout_var.set(str(settings.api_timeout))
             else:
                 # Use defaults if settings not loaded
@@ -208,6 +224,7 @@ class SettingsDialog:
                             defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
                         )
                 self._email_address_var.set(defaults.get("email_address", ""))
+                self._apps_script_url_var.set(defaults.get("apps_script_url", ""))
                 self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
         except Exception:
             # Use defaults if settings not loaded
@@ -226,6 +243,7 @@ class SettingsDialog:
                         defaults.get(f"workflow_{i}_name", f"Workflow {i + 1}")
                     )
             self._email_address_var.set(defaults.get("email_address", ""))
+            self._apps_script_url_var.set(defaults.get("apps_script_url", ""))
             self._api_timeout_var.set(str(defaults.get("api_timeout", 30)))
 
     def _browse_output_folder(self) -> None:
@@ -345,6 +363,7 @@ class SettingsDialog:
                 ],
                 api_timeout=int(self._api_timeout_var.get().strip()),
                 email_address=self._email_address_var.get().strip(),
+                apps_script_url=self._apps_script_url_var.get().strip(),
             )
 
             # Validate settings

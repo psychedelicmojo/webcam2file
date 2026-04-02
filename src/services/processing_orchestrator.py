@@ -324,6 +324,21 @@ class ProcessingOrchestrator:
             logger.error(f"Failed to download outputs for {filepath}: {e}")
             raise
 
+        # Rename downloaded files to the Creative_School_AI_Photobooth prefix so the
+        # preview panel can discover them with its glob pattern.
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        for i, src_path in enumerate(downloaded_files):
+            src = Path(src_path)
+            suffix = src.suffix  # preserve original extension (.png, .jpg, etc.)
+            new_name = f"Creative_School_AI_Photobooth_{timestamp}_{i + 1}{suffix}"
+            dest = src.parent / new_name
+            try:
+                src.rename(dest)
+                logger.info(f"Renamed output: {src.name} -> {new_name}")
+            except OSError as e:
+                logger.warning(f"Could not rename {src_path}: {e}")
+
         # Update status to completed
         self._capture_queue.set_processing_state(ProcessingState.COMPLETED)
         self._capture_queue.set_current_image("")

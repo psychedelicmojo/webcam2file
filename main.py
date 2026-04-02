@@ -3,6 +3,7 @@ import sys
 from src.models.application_settings import ApplicationSettings
 from src.services.capture_service import CaptureService
 from src.services.comfyui_service_impl import ComfyUIService
+from src.services.email_service_impl import GoogleAppsScriptEmailService
 from src.services.file_monitor_impl import FileMonitorServiceImpl
 from src.services.processing_orchestrator import ProcessingOrchestrator
 from src.services.settings_service import SettingsService
@@ -129,8 +130,13 @@ def main():
             print(f"Warning: Could not initialize ComfyUI: {e}")
             print("Running in webcam capture mode only.")
 
+    # Initialize email service (works even without an Apps Script URL configured)
+    email_service = GoogleAppsScriptEmailService(
+        apps_script_url=settings.apps_script_url,
+        timeout=settings.api_timeout,
+    )
+
     # Create and run main window
-    # Use the existing root window (MainWindow creates its own, so we don't need this)
     app = MainWindow(
         webcam_service=webcam_service,
         capture_service=capture_service,
@@ -138,6 +144,8 @@ def main():
         file_monitor_service=file_monitor_service,
         comfyui_service=comfyui_service,
         orchestrator=orchestrator,
+        email_service=email_service,
+        initial_email=settings.email_address,
     )
 
     # Start the application (video feed and event loop)

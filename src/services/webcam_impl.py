@@ -78,6 +78,11 @@ class WebcamServiceImpl(IWebcamService):
             # Try to set a reasonable frame rate
             self._cap.set(cv2.CAP_PROP_FPS, 30)
 
+            # Warm up the camera by reading and discarding a few frames
+            # Webcams often return empty/corrupted frames on the first few reads
+            for _ in range(3):
+                self._cap.read()
+
             self._running = True
 
         except cv2.error as e:
@@ -124,6 +129,13 @@ class WebcamServiceImpl(IWebcamService):
             if not ret:
                 raise CaptureError("Failed to capture frame from webcam")
 
+            # Validate frame is not None and has data
+            if frame is None:
+                raise CaptureError("Captured frame is None")
+
+            if frame.size == 0:
+                raise CaptureError("Captured frame is empty")
+
             # Encode frame as JPEG
             # OpenCV uses BGR, but JPEG typically expects RGB
             # However, OpenCV's imencode handles BGR correctly for JPEG
@@ -131,6 +143,10 @@ class WebcamServiceImpl(IWebcamService):
 
             if not success:
                 raise CaptureError("Failed to encode frame as JPEG")
+
+            # Validate buffer has data
+            if len(buffer) == 0:
+                raise CaptureError("Encoded buffer is empty")
 
             return buffer.tobytes()
 

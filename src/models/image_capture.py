@@ -58,13 +58,14 @@ class ImageCapture:
             )
 
     def _validate_output_folder(self) -> None:
-        """Validate output_folder is a valid directory path."""
+        """Validate output_folder is a valid directory path.
+
+        If the path is relative, it will be converted to absolute.
+        """
         path = Path(self.output_folder)
+        # Convert to absolute path if relative
         if not path.is_absolute():
-            raise ValueError(
-                f"Invalid output_folder: '{self.output_folder}'. "
-                f"Must be an absolute path"
-            )
+            self.output_folder = str(path.resolve())
 
     def _validate_status(self) -> None:
         """Validate status is one of the allowed values."""

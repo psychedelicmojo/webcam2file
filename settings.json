@@ -1,25 +1,25 @@
 {
-  "output_folder": "C:/Users/datom/Software Development/webcam2file/captures",
-  "comfyui_endpoint": "http://127.0.0.1:8000",
+  "output_folder": "captures",
+  "comfyui_endpoint": "http://127.0.0.1:8188",
   "workflow_configs": [
     {
-      "name": "Studio G",
-      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Studio_Ghibli_flux_kontext_dev.json"
+      "name": "studio ghibli",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Studio_Ghibli_flux_kontext_dev.json"
     },
     {
-      "name": "Saturday Morning.",
-      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Saturday_morning_cartoon_flux_kontext_dev.json"
+      "name": "Retro Pixel Avatar",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Retro_pixel-art avatar_flux_kontext_dev.json"
     },
     {
-      "name": "Comic Book Hero Poster",
-      "path": "C:/Users/datom/Software Development/webcam2file/workflows/Comic-book_hero_poster_flux_kontext_dev.json"
+      "name": "Fantasy RPG character card",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Fantasy_RPG_character_card_flux_kontext_dev.json"
     },
     {
-      "name": "",
-      "path": ""
+      "name": "Plush Doll",
+      "path": "C:/Users/dtom/Documents/projects/webcam2file/workflows/Plush_doll_flux_kontext_dev.json"
     }
   ],
-  "api_timeout": 90,
+  "api_timeout": 60,
   "art_styles": [
     {
       "name": "",
@@ -41,5 +41,7 @@
       "name": "",
       "path": ""
     }
-  ]
+  ],
+  "email_address": "",
+  "apps_script_url": ""
 }
