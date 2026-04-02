@@ -105,6 +105,20 @@ class ApplicationSettings:
             return self.workflow_configs[index]
         return None
 
+    def get_workflow_config_by_name(self, name: str) -> WorkflowConfig | None:
+        """Get workflow configuration by name.
+
+        Args:
+            name: Display name of the workflow
+
+        Returns:
+            WorkflowConfig with matching name, or None if not found
+        """
+        for config in self.workflow_configs:
+            if config.name == name:
+                return config
+        return None
+
     def validate(self) -> bool:
         """Validate all settings.
 

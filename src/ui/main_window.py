@@ -55,6 +55,7 @@ class MainWindow:
         self._comfyui_service = comfyui_service
         self._orchestrator = orchestrator
         self._error_manager = ErrorManager()
+        self._selected_workflow_name: Optional[str] = None
 
         self._root = tk.Tk()
         self._root.title("Webcam to ComfyUI")
@@ -306,6 +307,9 @@ class MainWindow:
             self._workflow_dropdown["values"] = workflow_names
             if workflow_names:
                 self._workflow_var.set(workflow_names[0])
+                # Set selected workflow in orchestrator
+                if self._orchestrator:
+                    self._orchestrator.set_selected_workflow(workflow_names[0])
 
         # Update status label
         self._status_label.config(
@@ -321,6 +325,10 @@ class MainWindow:
         """
         selected_workflow = self._workflow_var.get().strip()
         if selected_workflow:
+            self._selected_workflow_name = selected_workflow
+            # Pass selected workflow to orchestrator
+            if self._orchestrator:
+                self._orchestrator.set_selected_workflow(selected_workflow)
             self._status_label.config(
                 text=f"Status: Workflow selected - {selected_workflow}",
                 foreground="blue",

@@ -69,6 +69,9 @@ class ProcessingOrchestrator:
         self._on_processing_complete: Optional[Callable[[ImageCapture], None]] = None
         self._on_processing_error: Optional[Callable[[ImageCapture, str], None]] = None
 
+        # Selected workflow
+        self._selected_workflow_name: Optional[str] = None
+
     def start(self) -> None:
         """Start the processing orchestrator.
 
@@ -251,15 +254,23 @@ class ProcessingOrchestrator:
         self._capture_queue.set_current_image(filepath)
         self._update_status()
 
-        # Load workflow JSON from first configured workflow
-        if (
-            not self._settings.workflow_configs
-            or not self._settings.workflow_configs[0].path
-        ):
-            raise APIError(
-                "No workflow JSON file configured. Please configure a workflow in settings."
-            )
-        workflow_path = Path(self._settings.workflow_configs[0].path)
+        # Load workflow JSON from selected workflow
+        workflow_config = None
+        if self._selected_workflow_name:
+            # Use selected workflow by name
+            workflow_config = self._settings.get_workflow_config_by_name(self._selected_workflow_name)
+            if not workflow_config or not workflow_config.path:
+                logger.warning(f"Selected workflow '{self._selected_workflow_name}' not found or not configured, falling back to first configured workflow")
+        
+        if not workflow_config:
+            # Fallback to first configured workflow
+            if not self._settings.workflow_configs or not self._settings.workflow_configs[0].path:
+                raise APIError(
+                    "No workflow JSON file configured. Please configure a workflow in settings."
+                )
+            workflow_config = self._settings.workflow_configs[0]
+        
+        workflow_path = Path(workflow_config.path)
         try:
             with open(workflow_path, "r") as f:
                 workflow_json = json.load(f)
@@ -496,6 +507,15 @@ class ProcessingOrchestrator:
             callback: Function to call when processing fails.
         """
         self._on_processing_error = callback
+
+    def set_selected_workflow(self, workflow_name: str) -> None:
+        """Set the selected workflow by name.
+
+        Args:
+            workflow_name: Name of the workflow to select
+        """
+        logger.debug(f"Setting selected workflow to: {workflow_name}")
+        self._selected_workflow_name = workflow_name
 
     def update_settings(self, settings: ApplicationSettings) -> None:
         """Update orchestrator settings at runtime.
