@@ -89,10 +89,11 @@ def main():
     # Fallback to defaults if settings are invalid or missing
     if settings is None:
         print("Using default settings (ComfyUI disabled)...")
+        from src.models.application_settings import WorkflowConfig
         settings = ApplicationSettings(
             output_folder="captures",
             comfyui_endpoint="http://127.0.0.1:8188",
-            workflow_json_path="workflow.json",
+            workflow_configs=[WorkflowConfig(name="", path="") for _ in range(4)],
             api_timeout=30,
             enable_comfyui=False  # Disable ComfyUI if settings are invalid
         )
