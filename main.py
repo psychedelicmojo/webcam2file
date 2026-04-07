@@ -49,7 +49,8 @@ def load_and_validate_settings():
                     f"Warning: ComfyUI connection test failed: {result.get('message')}"
                 )
                 print(
-                    "ComfyUI will be disabled. Images will be captured but not processed."
+                    "ComfyUI will be disabled. Images will be captured "
+                    "but not processed."
                 )
                 # Return settings but with ComfyUI disabled
                 settings.enable_comfyui = False
